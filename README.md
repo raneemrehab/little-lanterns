@@ -12,7 +12,7 @@ Early years learning resources for nurseries, teachers and families (ages 2–6)
 
 | Game | Learning area | Skill | Level |
 | --- | --- | --- | --- |
-| [Light the Lanterns](games/light-the-lanterns/) | Counting & Numbers | Rote counting 1–5 | 1–2 |
+| [Light the Lanterns](games/light-the-lanterns/) | Counting & Numbers | Rote counting 1–5 (Level 1), 5–10 (Level 2) | 1–2 |
 
 ## Brand basics
 
