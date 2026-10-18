@@ -29,7 +29,7 @@ each round ends when a Check matches, and after round 5 the card says "You picke
 | Moment | What the child hears | What they see |
 | --- | --- | --- |
 | Level starts | "Tap the apples" / "Move the apples into the basket" *(not recorded yet; skipped until added)* | One apple glows with a "tap me!" / "drag me!" label |
-| Level 3–6 round starts | "Can you pick three apples?" (recordings for 1–5; for 6–10 the number is spoken until those are recorded) | "Pick **3** apples!" with the number in a big yellow box; number tiles 1–3 to fill |
+| Level 3–6 round starts | "Can you pick three apples?" (one recording for each number, 1–10) | "Pick **3** apples!" with the number in a big yellow box; number tiles 1–3 to fill |
 | An apple is counted (Levels 1–2) | The number ("three!") and a soft chime | The apple flies into the basket with sparkles; its number appears on it |
 | An apple is picked (Levels 3–6) | A soft "plop" only | The apple drops into the basket; no number |
 | Check (Levels 3–6) | The basket counted aloud, one apple at a time | Each apple's number appears as it is counted |
@@ -43,7 +43,7 @@ Nothing is ever marked wrong, in line with all Little Lanterns games.
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole game: HTML, CSS, JavaScript, artwork (inline SVG) and voice clips (base64). Works on its own. |
-| `audio/can-you-pick-*.mp3` | The "Can you pick … apple(s)?" recordings for 1–5, kept for reference or re-recording. The game uses the copies embedded in `index.html`. |
+| `audio/can-you-pick-*.mp3` | The "Can you pick … apple(s)?" recordings for 1–10, kept for reference or re-recording. The game uses the copies embedded in `index.html`. |
 
 "Good guess, but try again" is the same recording as in Light the Lanterns (`../light-the-lanterns/audio/good-guess-but-try-again.mp3`).
 
@@ -59,4 +59,4 @@ The number recordings are the same ones used in Light the Lanterns (`../light-th
 ## Adding the voice-overs
 
 In `index.html`, add entries to the `VOICE` object near the bottom: `tapApples` (Level 1) and `moveApples` (Level 2),
-each a base64 MP3 string. The questions are in as `pick1` … `pick5`; add `pick6` … `pick10` the same way for "Can you pick six apples?" and so on (`base64 -w0 tap-the-apples.mp3`). Adjust `PHRASE_MS` in the Config section to match their length.
+each a base64 MP3 string. The questions for 1–10 are already in as `pick1` … `pick10` (to replace one: `base64 -w0 audio/can-you-pick-six-apples.mp3`). Adjust `PHRASE_MS` in the Config section to match their length.
