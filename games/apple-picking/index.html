@@ -57,20 +57,21 @@ button:focus-visible,a:focus-visible{outline:4px solid var(--teal);outline-offse
 /* ---------- Home ---------- */
 #home{gap:48px;padding:48px}
 .sun-blob{position:absolute;right:-120px;top:-140px;width:520px;height:520px;border-radius:50%;background:var(--butter-soft)}
-.home-text{position:relative;z-index:1;flex:0 0 500px;display:flex;flex-direction:column;justify-content:center;gap:24px}
+.home-text{position:relative;z-index:1;flex:0 0 500px;display:flex;flex-direction:column;justify-content:center;gap:20px}
 .pills{display:flex;gap:10px;flex-wrap:wrap}
 .pill{font-weight:800;font-size:14px;letter-spacing:.08em;padding:8px 14px;border-radius:999px;background:var(--teal-soft);color:var(--teal-deep)}
 .pill.y{background:var(--butter-soft);color:var(--butter-deep)}
-.title{margin:0;font:800 88px/.95 var(--display);letter-spacing:-.02em;text-wrap:balance}
+.title{margin:0;font:800 80px/.95 var(--display);letter-spacing:-.02em;text-wrap:balance}
 .lead{margin:0;font-size:24px;line-height:1.45;color:var(--ink-soft);max-width:460px}
-.levels{display:flex;flex-direction:column;gap:16px;margin-top:6px}
-.level-btn{display:flex;align-items:center;gap:18px;min-height:100px;box-sizing:border-box;width:100%;padding:16px 24px;border-radius:28px;border:0;text-align:left;cursor:pointer;transition:transform .1s,box-shadow .1s}
+.levels{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.level-btn{display:flex;align-items:center;gap:18px;min-height:92px;box-sizing:border-box;width:100%;padding:16px 24px;border-radius:28px;border:0;text-align:left;cursor:pointer;transition:transform .1s,box-shadow .1s}
 .level-btn.primary{background:var(--teal);color:var(--paper);box-shadow:0 6px 0 var(--teal-deep)}
 .level-btn.secondary{background:var(--paper);border:3px solid var(--line);box-shadow:0 6px 0 var(--line)}
 .level-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--teal-deep)}
 .level-btn.secondary:active{box-shadow:0 2px 0 var(--line)}
 .badge{flex:0 0 auto;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 30px var(--display);background:var(--paper);color:var(--teal-deep)}
 .secondary .badge{background:var(--butter);color:var(--ink)}
+.secondary .badge.b3{background:var(--sky);color:var(--teal-deep)}
 .lv-text{flex:1;display:flex;flex-direction:column}
 .lv-name{font:800 28px/1.1 var(--display)}
 .lv-sub{font-size:17px;opacity:.9}
@@ -130,6 +131,9 @@ button:focus-visible,a:focus-visible{outline:4px solid var(--teal);outline-offse
 .lv2 .tip-icon{background:var(--butter-soft);color:var(--butter-deep)}
 .tip{flex:1 1 380px;margin:0;font-size:26px;font-weight:700;line-height:1.3}
 .tip span{color:var(--teal-deep)}
+.tip b.target{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:64px;padding:0 10px;margin:0 6px;box-sizing:border-box;border-radius:20px;background:var(--butter);color:var(--ink);font:800 44px/1 var(--display);vertical-align:middle}
+.tip b.target.pop{animation:bounce .5s cubic-bezier(.3,1.5,.5,1)}
+.port .tip{text-align:center;flex-basis:100%;font-size:32px}
 .strip{display:flex;gap:8px}
 .tile{width:56px;height:56px;box-sizing:border-box;border-radius:16px;border:3px solid var(--line);color:#7b858b;display:flex;align-items:center;justify-content:center;font:800 30px var(--display);transition:background .3s,color .3s,border-color .3s}
 .tile.on{background:var(--teal);border-color:var(--teal);color:var(--paper);animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
@@ -149,7 +153,7 @@ button:focus-visible,a:focus-visible{outline:4px solid var(--teal);outline-offse
 /* ---------- Portrait ---------- */
 .port #home{flex-direction:column-reverse;padding:40px;gap:32px}
 .port .home-text{flex:0 0 auto}
-.port .title{font-size:84px}
+.port .title{font-size:80px}
 .port .lead{max-width:none}
 .port #play{padding:28px 32px 32px}
 .port .tile{width:72px;height:72px;font-size:38px;border-radius:20px}
@@ -214,7 +218,7 @@ button:focus-visible,a:focus-visible{outline:4px solid var(--teal);outline-offse
   <section id="home" class="screen" aria-label="Start">
     <div class="sun-blob" aria-hidden="true"></div>
     <div class="home-text">
-      <div class="pills"><span class="pill">COUNTING &amp; NUMBERS</span><span class="pill y">LEVELS 1–2</span></div>
+      <div class="pills"><span class="pill">COUNTING &amp; NUMBERS</span><span class="pill y">LEVELS 1–3</span></div>
       <h1 class="title">Apple Picking</h1>
       <p class="lead">Put each apple in the basket and count it, one by one.</p>
       <div class="levels">
@@ -226,6 +230,11 @@ button:focus-visible,a:focus-visible{outline:4px solid var(--teal);outline-offse
         <button type="button" class="level-btn secondary" id="go2">
           <span class="badge">2</span>
           <span class="lv-text"><span class="lv-name">Move and count</span><span class="lv-sub">Move 5 apples into the basket</span></span>
+          <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+        </button>
+        <button type="button" class="level-btn secondary" id="go3">
+          <span class="badge b3">3</span>
+          <span class="lv-text"><span class="lv-name">Pick the number</span><span class="lv-sub">Pick 1 apple, then 2, then 3…</span></span>
           <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
         </button>
       </div>
@@ -324,7 +333,7 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   /* ================= Config ================= */
   const WORDS = ['', 'one', 'two', 'three', 'four', 'five'];
   const SPEECH_MS = {1: 600, 2: 580, 3: 680, 4: 650, 5: 580};
-  const PHRASE_MS = {tapApples: 2500, moveApples: 3000};
+  const PHRASE_MS = {tapApples: 2500, moveApples: 3000, pickApples: 2500};
   const IDLE_NUDGE_MS = 6000;
   const LEVELS = {
     1: { apples: 3, eyebrow: 'LEVEL 1 · TAP AND COUNT',  hint: 'tap me!',
@@ -332,6 +341,8 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
          next: { label: 'Next level', go: () => start(2) } },
     2: { apples: 5, eyebrow: 'LEVEL 2 · MOVE AND COUNT', hint: 'drag me!',
          tip: 'Move each apple into the basket. <span>Count as you go!</span>', voice: 'moveApples',
+         next: { label: 'Next level', go: () => start(3) } },
+    3: { apples: 6, pick: [1, 2, 3, 4, 5], eyebrow: 'LEVEL 3 · PICK THE NUMBER', hint: 'tap me!', voice: 'pickApples',
          next: { label: 'Back to start', go: () => goHome() } },
   };
   // Where apples can hang, in the tree drawing's own coordinates (420 × 480).
@@ -463,12 +474,12 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   }
   function positionApple(a) {
     if (!L || a.el.classList.contains('flying')) return;
-    const p = a.n ? basketPos(a.n, apples.length) : treePos(a.slot);
+    const p = a.n ? basketPos(a.n, S.goal) : treePos(a.slot);
     place(a.el, p.x, p.y, p.s, p.s);
   }
 
   /* ================= Game state ================= */
-  const S = { level: 1, count: 0, busy: false, token: 0, lastTouch: Date.now() };
+  const S = { level: 1, count: 0, goal: 3, round: 0, busy: false, token: 0, lastTouch: Date.now() };
   let apples = [];
   const alive = (tok) => tok === S.token;
   const LV = () => LEVELS[S.level];
@@ -584,7 +595,7 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     const n = ++S.count; a.n = n;
     a.el.querySelector('.n').textContent = n;
     a.el.setAttribute('aria-label', 'Apple ' + n);
-    const from = treePos(a.slot), to = basketPos(n, apples.length);
+    const from = treePos(a.slot), to = basketPos(n, S.goal);
     // Jump the element to its basket spot, then animate from where it was along a little arc.
     a.el.classList.add('flying');
     a.el.style.transform = '';
@@ -604,9 +615,10 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     bumpBasket(); bounceApple(a);
     sparkle(to.x + to.s / 2, to.y + to.s / 2);
     speak(n); Sound.chime(n); Sound.say(n);
-    setDots(n, apples.length); setStrip(apples.length, n);
+    if (!LV().pick) setDots(n, S.goal);
+    setStrip(S.goal, n);
     S.lastTouch = Date.now();
-    if (n >= apples.length) { finish(); return; }
+    if (n >= S.goal) { if (LV().pick) roundDone(); else finish(); return; }
     S.busy = false;
     setTimeout(() => { if (alive(tok) && !S.busy && !hinted) showHint(); }, 1400);
   }
@@ -636,11 +648,20 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   async function start(level) {
     S.token++; S.level = level; S.count = 0; S.busy = true; S.lastTouch = Date.now();
     const tok = S.token, lv = LV();
-    stage.classList.toggle('lv2', level === 2);
+    stage.classList.toggle('lv2', level >= 2);
     $('#eyebrow').textContent = lv.eyebrow;
-    $('#tip').innerHTML = lv.tip;
     apples.forEach((a) => a.el.remove());
     clearHint();
+    if (lv.pick) {
+      S.round = 0;
+      setDots(0, lv.pick.length);
+      show('play');
+      if (!(await ensureAudio(tok))) return;
+      newRound(tok);
+      return;
+    }
+    S.goal = lv.apples;
+    $('#tip').innerHTML = lv.tip;
     const slots = shuffle(range(0, TREE_SLOTS.length - 1)).slice(0, lv.apples);
     apples = slots.map((s, i) => makeApple(s, i));
     setDots(0, lv.apples); setStrip(lv.apples, 0);
@@ -649,6 +670,50 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     S.busy = false; S.lastTouch = Date.now();
     showHint();
     await Sound.phrase(lv.voice);   // "Tap the apples" / "Move the apples into the basket" (skipped if not recorded yet)
+  }
+
+  /* ----- Level 3: "Pick 1 apple", "Pick 2 apples" … ----- */
+  function plural(n) { return n === 1 ? 'apple' : 'apples'; }
+  async function newRound(tok) {
+    const lv = LV();
+    S.count = 0; S.goal = lv.pick[S.round]; S.busy = true;
+    apples.forEach((a) => a.el.remove());
+    clearHint();
+    const slots = shuffle(range(0, TREE_SLOTS.length - 1)).slice(0, lv.apples);
+    apples = slots.map((s, i) => makeApple(s, i));
+    $('#tip').innerHTML = 'Pick <b class="target" id="target">' + S.goal + '</b> ' + plural(S.goal) + '!';
+    setStrip(S.goal, 0);
+    layoutScene();
+    S.busy = false; S.lastTouch = Date.now();
+    if (S.round === 0) showHint();
+    await sayTask(tok);
+  }
+  // Read the task out: the "Pick … apples" voice-over if recorded, then the number.
+  async function sayTask(tok) {
+    const tg = $('#target');
+    if (tg) restart(tg, 'pop');
+    await Sound.phrase(LV().voice);
+    if (!alive(tok)) return;
+    if (tg) restart(tg, 'pop');
+    await Sound.say(S.goal);
+    S.lastTouch = Date.now();
+  }
+  async function roundDone() {
+    const lv = LV(), tok = S.token;
+    S.busy = true;
+    await sleep(900);
+    if (!(await countBasket(tok))) return;
+    Sound.fanfare();
+    sparkle(L.bx + L.BW / 2, L.by + L.BH * 0.2);
+    setDots(S.round + 1, lv.pick.length);
+    await sleep(1300);
+    if (!alive(tok)) return;
+    S.round++;
+    if (S.round >= lv.pick.length) { finish(true); return; }
+    // Basket empties gently, a fresh tree, the next number.
+    await Promise.all(apples.map((a) => a.el.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-30px)' }], { duration: 350, fill: 'forwards' }).finished.catch(() => {})));
+    if (!alive(tok)) return;
+    newRound(tok);
   }
 
   // Count everything in the basket together, then celebrate.
@@ -662,18 +727,25 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     return alive(tok);
   }
 
-  async function finish() {
-    const lv = LV(), tok = S.token, total = apples.length;
+  async function finish(alreadyCounted) {
+    const lv = LV(), tok = S.token, total = S.goal;
     S.busy = true;
-    await sleep(1000);
-    if (!(await countBasket(tok))) return;
+    if (!alreadyCounted) {
+      await sleep(1000);
+      if (!(await countBasket(tok))) return;
+    }
     sparkle(L.bx + L.BW / 2, L.by + L.BH * 0.2);
     Sound.fanfare();
     const star = '<svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/></svg>';
     $('#stars').innerHTML = star.repeat(5);
     [...$('#stars').children].forEach((s, i) => (s.style.animationDelay = (0.15 + i * 0.12) + 's'));
-    $('#doneTitle').textContent = 'You counted ' + total + ' apples!';
-    $('#doneText').textContent = range(1, total).join(', ') + '. One number for each apple.';
+    if (lv.pick) {
+      $('#doneTitle').textContent = 'You picked them all!';
+      $('#doneText').textContent = 'You picked 1, 2, 3, 4 and 5 apples.';
+    } else {
+      $('#doneTitle').textContent = 'You counted ' + total + ' apples!';
+      $('#doneText').textContent = range(1, total).join(', ') + '. One number for each apple.';
+    }
     $('#nextLabel').textContent = lv.next.label;
     await sleep(400);
     if (!alive(tok)) return;
@@ -685,7 +757,12 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     Sound.unlock(); S.lastTouch = Date.now();
     if (S.busy) return;
     const tok = S.token;
-    if (!S.count) { if (hinted) bounceApple(hinted); await Sound.phrase(LV().voice); return; }
+    if (!S.count) {
+      if (hinted) bounceApple(hinted);
+      if (LV().pick) { S.busy = true; await sayTask(tok); if (alive(tok)) S.busy = false; }
+      else await Sound.phrase(LV().voice);
+      return;
+    }
     S.busy = true;
     if (await countBasket(tok)) { S.busy = false; if (hinted) bounceApple(hinted); }
   }
@@ -693,6 +770,7 @@ const VOICE = {"2": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   /* ================= Wiring ================= */
   $('#go1').addEventListener('click', () => { Sound.unlock(); start(1); });
   $('#go2').addEventListener('click', () => { Sound.unlock(); start(2); });
+  $('#go3').addEventListener('click', () => { Sound.unlock(); start(3); });
   $('#back').addEventListener('click', goHome);
   $('#replay').addEventListener('click', replay);
   $('#again').addEventListener('click', () => start(S.level));
