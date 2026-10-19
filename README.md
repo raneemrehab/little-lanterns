@@ -17,6 +17,7 @@ Early years learning resources for nurseries, teachers and families (ages 2–6)
 | [Duck Pond](games/duck-pond/) | Counting & Numbers | "How many?": the last number counted tells the total (2–5, then up to 10) | 1–3 |
 | [Quick Peek](games/quick-peek/) | Counting & Numbers | Subitising: 1–3 round things, dice and fingers up to 5, then ten frame, two dice and two hands up to 10 | 1–6 |
 | [Hazel's Berries](games/hazels-berries/) | Counting & Numbers | Counting out a set: give Hazel the hedgehog 1–3 berries (spots to fill), then 1–5 and 6–10 (counted aloud, then by yourself), then mixed 1–10 | 1–6 |
+| [Firefly Jars](games/firefly-jars/) | Counting & Numbers | Numeral recognition: match numbers to jars of fireflies, 0–5 (Level 2 · Glow), 0–10 (Level 3 · Shine), 11–20 (Level 4 · Bright) | 2–4 |
 
 ## Brand basics
 
