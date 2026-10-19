@@ -18,7 +18,7 @@ while the number is spoken. Each first-try answer makes the next peek 0.2 s shor
 
 | Moment | What the child hears | What they see |
 | --- | --- | --- |
-| Start screen, first touch or **Hear how to play** | "Welcome to Quick Peek! Let's see how many, super fast." *(not recorded yet)* | |
+| Start screen, first touch or **Hear how to play** | "Hello! A card will peek out for a moment, then hide. Tell me how many you saw! Tap a level to start." *(not recorded yet)* | |
 | First round of a level | Level intro *(not recorded yet)* | The card drops in face down |
 | The card flips up | "Quick look!" *(not recorded yet)* and a soft flip sound | "quick look!" label and a draining butter bar |
 | The card flips over | "How many lanterns / oranges / ladybirds / bubbles / spots / fingers did you see?" | Two or three answer buttons, each a numeral with tiny copies of the thing under it |
@@ -35,7 +35,7 @@ three spots), so the answer depends on what was seen.
 
 | Clip | Line |
 | --- | --- |
-| `welcome` | "Welcome to Quick Peek! Let's see how many, super fast." |
+| `welcome` | "Hello! A card will peek out for a moment, then hide. Tell me how many you saw! Tap a level to start." |
 | `intro1` | "Watch the card. It only peeks for a moment!" |
 | `intro2` | "Here comes the dice. How many spots will you see?" |
 | `intro3` | "I'm going to hold up my fingers. Quick, have a look!" |
