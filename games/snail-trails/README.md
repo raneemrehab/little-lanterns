@@ -10,9 +10,10 @@ that follows the child's finger on a big round garden stone. Everything is paint
 | Level 3 · Shine | Copy | Writes the number on Sunny's sign onto the empty stone. |
 | Level 4 · Bright | Write it yourself | Hears a number and writes it from memory. |
 | Level 4 · Bright | Spot the backwards one | Taps the pebble whose number is facing the wrong way. It flips round the right way. |
+| Level 4 · Bright · 11 to 20 | Trace, Copy, Write it yourself, Spot the backwards one | The same four games with 11 to 20, written as two digits side by side on a wider stone. Copy and Write it yourself show two soft spaces, one for each digit. In Spot, one digit is mirrored (the ones digit of 12 to 19, or the 2 of 20). |
 
-Each game has 5 rounds with five different numbers from 0 to 9. At least three are numbers children often write
-backwards (2, 3, 5, 6, 7, 9). Spot the backwards one only ever flips 2, 3, 4, 5, 6, 7 or 9 (0, 1 and 8 look the same
+Each game has 5 rounds with five different numbers from 0 to 9 (or 11 to 20). At least three are numbers children often
+write backwards (2, 3, 5, 6, 7, 9, or 12, 13, 15, 16, 17, 19). Spot the backwards one only ever flips 2, 3, 4, 5, 6, 7 or 9 (0, 1 and 8 look the same
 either way), and puts a look-alike beside it (6 and 9, 2 and 5). Every time a game is played (including **Play again**)
 the numbers come in a new order: never the same order as last time, never starting on the same number, and never simply
 counting up or down.
@@ -20,10 +21,11 @@ counting up or down.
 **Checking free writing.** In Copy and Write it yourself the game waits until the finger has rested for a moment (so
 two-stroke numbers like 4 and 5 aren't checked too early), then compares the shape with every number, written forwards
 and backwards, using a point-cloud shape matcher that doesn't mind stroke order, direction, size or a wobbly hand. It
-is kind on purpose: a shape counts as right when the right number is as close as any other.
+is kind on purpose: a shape counts as right when the right number is as close as any other. For 11 to 20 it tries
+every way of splitting the strokes into a left and a right digit, so a cramped or uneven gap still counts.
 
 The game's own stages are never called "Level 5" and so on, so they can't be confused with the curriculum levels.
-**Next** leads through all four games, then back to start.
+**Next** leads through all eight games (0 to 9, then 11 to 20), then back to start.
 
 ## Voice and feedback
 
@@ -55,7 +57,7 @@ Nothing is ever marked wrong, in line with all Little Lanterns games.
 | `index.html` | The whole game: HTML, CSS, JavaScript, artwork and voice clips (base64). Works on its own. |
 | `audio/*.mp3` | Original Snail Trails recordings: `welcome`, `start-at-the-green-dot-and-follow`, `look-at-the-number`, `listen-then-write`, `facing-the-wrong-way-find-it`, `start-at-the-green-dot`, `keep-going`, `oops-wrong-way`, `watch-sunny`. |
 
-Reused recordings: zero is from Firefly Jars (`../firefly-jars/audio/`); one to nine and "Good guess, but try again"
+Reused recordings: zero and eleven to twenty are from Firefly Jars (`../firefly-jars/audio/`); one to nine and "Good guess, but try again"
 are from Light the Lanterns (`../light-the-lanterns/audio/`); "Yes! That's right!" (`right`) and "Do you want to play
 again, or try the next level?" (`playAgain`) are from Duck Pond (`../duck-pond/audio/`).
 
@@ -68,7 +70,7 @@ again, or try the next level?" (`playAgain`) are from Duck Pond (`../duck-pond/a
 
 ## Changing a recording
 
-Every voice clip is in the `VOICE` object in the first `<script>` of `index.html`: `0` … `9`, `tryAgain`, `right`,
+Every voice clip is in the `VOICE` object in the first `<script>` of `index.html`: `0` … `9`, `11` … `20`, `tryAgain`, `right`,
 `playAgain`, `welcome`, `trace`, `copy`, `listen`, `spot`, `startDot`, `keepGoing`, `wrongWay` and `watchMe`. Two lines
 are still to record and can be added under these keys: `clueSign` ("Here's a clue. Look at Sunny's sign.") and
 `wellDone` ("You wrote all the numbers!"). Add or replace a string with the base64 of an MP3
@@ -79,4 +81,4 @@ clip is simply skipped.
 
 The dotted numbers and the shapes the checker compares against are in `DIGITS` (how each number is taught, stroke by
 stroke, in a 200×260 box) and `VARIANTS` (other ways children write them, such as a 1 with a flag or an open 4) near
-the top of the game's script.
+the top of the game's script. `layoutOf` places the two digits of 11 to 20 side by side.
