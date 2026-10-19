@@ -16,7 +16,7 @@ Early years learning resources for nurseries, teachers and families (ages 2–6)
 | [Apple Picking](games/apple-picking/) | Counting & Numbers | One-to-one counting (3 apples, then 5); counting out a set (pick 1–10, in order then mixed) | 1–6 |
 | [Duck Pond](games/duck-pond/) | Counting & Numbers | "How many?": the last number counted tells the total (2–5, then up to 10) | 1–3 |
 | [Quick Peek](games/quick-peek/) | Counting & Numbers | Subitising: 1–3 round things, dice and fingers up to 5, then ten frame, two dice and two hands up to 10 | 1–6 |
-| [Hazel's Berries](games/hazels-berries/) | Counting & Numbers | Counting out a set: give Hazel the hedgehog 1–3 berries (spots to fill), then 1–5 (counted aloud, then by yourself) | 1–3 |
+| [Hazel's Berries](games/hazels-berries/) | Counting & Numbers | Counting out a set: give Hazel the hedgehog 1–3 berries (spots to fill), then 1–5 and 6–10 (counted aloud, then by yourself), then mixed 1–10 | 1–6 |
 
 ## Brand basics
 
