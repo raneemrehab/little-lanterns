@@ -20,6 +20,7 @@ Early years learning resources for nurseries, teachers and families (ages 2–6)
 | [Firefly Jars](games/firefly-jars/) | Counting & Numbers | Numeral recognition: match numbers to jars of fireflies, 0–5 (Level 2 · Glow), 0–10 (Level 3 · Shine), 11–20 (Level 4 · Bright) | 2–4 |
 | [Lily Pad Words](games/lily-pad-words/) | Counting & Numbers | Number names and words: match a number to its word, 1–5 then 1–10 (Level 3 · Shine); read a word and find its number or that many flowers, 1–10 (Level 4 · Bright) | 3–4 |
 | [Snail Trails](games/snail-trails/) | Counting & Numbers | Writing numerals: trace 0–9 and copy from Sunny's sign (Level 3 · Shine); write 0–9 from memory and spot the backwards number, then all four games with 11–20 (Level 4 · Bright) | 3–4 |
+| [Maple's Cookies](games/maples-cookies/) | Counting & Numbers | Zero: count down to an empty plate ("No cookies left! That's zero.") and count plates of 0–5 (Level 2 · Glow); match 0–10 to a plate and say how many are left after Maple eats (Level 3 · Shine) | 2–3 |
 
 ## Brand basics
 
