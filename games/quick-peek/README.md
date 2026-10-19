@@ -18,7 +18,7 @@ while the number is spoken. Each first-try answer makes the next peek 0.2 s shor
 
 | Moment | What the child hears | What they see |
 | --- | --- | --- |
-| Start screen, first touch or **Hear how to play** | "Hello! A card will peek out for a moment, then hide. Tell me how many you saw! Tap a level to start." *(not recorded yet)* | |
+| Start screen, first touch or **Hear how to play** | "Hello! A card will peek out for a moment, then hide. Tell me how many you saw! Tap a level to start." | |
 | First round of a level | Level intro *(not recorded yet)* | The card drops in face down |
 | The card flips up | "Quick look!" *(not recorded yet)* and a soft flip sound | "quick look!" label and a draining butter bar |
 | The card flips over | "How many lanterns / oranges / ladybirds / bubbles / spots / fingers did you see?" | Two or three answer buttons, each a numeral with tiny copies of the thing under it |
@@ -35,7 +35,6 @@ three spots), so the answer depends on what was seen.
 
 | Clip | Line |
 | --- | --- |
-| `welcome` | "Hello! A card will peek out for a moment, then hide. Tell me how many you saw! Tap a level to start." |
 | `intro1` | "Watch the card. It only peeks for a moment!" |
 | `intro2` | "Here comes the dice. How many spots will you see?" |
 | `intro3` | "I'm going to hold up my fingers. Quick, have a look!" |
@@ -46,7 +45,7 @@ three spots), so the answer depends on what was seen.
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole game: HTML, CSS, JavaScript, artwork (inline SVG) and voice clips (base64). Works on its own. |
-| `audio/*.mp3` | Original Quick Peek recordings: `how-many-lanterns`, `how-many-oranges`, `how-many-ladybirds`, `how-many-bubbles`, `how-many-spots`, `how-many-fingers`, `peek-again`, `you-saw-it`, `well-done`, `play-again`. |
+| `audio/*.mp3` | Original Quick Peek recordings: `welcome`, `how-many-lanterns`, `how-many-oranges`, `how-many-ladybirds`, `how-many-bubbles`, `how-many-spots`, `how-many-fingers`, `peek-again`, `you-saw-it`, `well-done`, `play-again`. |
 
 Reused recordings: the numbers and "Good guess, but try again" are from Light the Lanterns (`../light-the-lanterns/audio/`).
 "Yes! That's right!" (`right`) from Duck Pond is kept as a stand-in in case `youSawIt` is ever removed.
@@ -62,6 +61,5 @@ Reused recordings: the numbers and "Good guess, but try again" are from Light th
 
 Every voice clip is in the `VOICE` object near the bottom of `index.html`: `1` … `5`, `tryAgain`, `right`, the six
 `howMany…` questions, `peekAgain`, `youSawIt`, `wellDone` and `playAgain`. Replace a string with the base64 of a new
-MP3 (`base64 -w0 audio/peek-again.mp3`), or add a new key for a line that isn't recorded yet: `welcome`, `intro1`–`intro3`
-or `quickLook`. Timings come from each clip's own length, so nothing else needs adjusting. A missing clip is simply
-skipped, and **Hear how to play** stays hidden until `welcome` is added.
+MP3 (`base64 -w0 audio/peek-again.mp3`), or add a new key for a line that isn't recorded yet: `intro1`–`intro3` or `quickLook`. Timings come from each clip's own length, so nothing else needs adjusting. A missing clip is simply
+skipped (and **Hear how to play** hides itself if `welcome` is ever removed).
