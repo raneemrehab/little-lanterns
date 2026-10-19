@@ -20,7 +20,7 @@ not, Hazel asks for more or for some back, and the berries stay where they are.
 
 | Moment | What the child hears | What they see |
 | --- | --- | --- |
-| Start screen, first touch or **Hear how to play** | Welcome *(not recorded yet)* | |
+| Start screen, first touch or **Hear how to play** | "Hello! I'm Hazel the hedgehog, and I'm hungry! Tap the berries to give me just the right number. Tap a level to start." | |
 | First round of a level | Level 1: "Tap a berry to put it on Hazel's plate. Fill the spots!" Level 2: "Let's count the berries together, one at a time." Level 3: "This time, count the berries by yourself. Then tap Check." | One berry glows with a "tap me!" label |
 | A round starts | "Can you give Hazel one berry?" *(two to five not recorded yet)* | "Give Hazel **3** berries!" with the number in a big yellow box |
 | A berry is given (Levels 1–2) | The number ("three!") and a soft chime | The berry hops onto the plate with its number above it; in Level 1 a dashed spot fills |
@@ -38,7 +38,6 @@ Nothing is ever marked wrong, in line with all Little Lanterns games.
 
 | Clip | Line |
 | --- | --- |
-| `welcome` | "Hello! This is Hazel the hedgehog. Hazel is hungry. Can you give her some berries?" |
 | `give2` … `give5` | "Can you give Hazel two berries?" … "Can you give Hazel five berries?" |
 
 ## Files
@@ -46,7 +45,7 @@ Nothing is ever marked wrong, in line with all Little Lanterns games.
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole game: HTML, CSS, JavaScript, artwork (inline SVG) and voice clips (base64). Works on its own. |
-| `audio/*.mp3` | Original Hazel's Berries recordings: `intro-level-1` to `intro-level-3`, `can-you-give-hazel-one-berry`, `can-i-have-some-more`, `too-many`, `yum-thank-you`, `well-done`. |
+| `audio/*.mp3` | Original Hazel's Berries recordings: `welcome`, `intro-level-1` to `intro-level-3`, `can-you-give-hazel-one-berry`, `can-i-have-some-more`, `too-many`, `yum-thank-you`, `well-done`. |
 
 Reused recordings: the numbers one to five are from Light the Lanterns (`../light-the-lanterns/audio/`); "Yes! That's right!"
 (`right`) and "Do you want to play again, or try the next level?" (`playAgain`) are from Duck Pond (`../duck-pond/audio/`).
@@ -60,8 +59,7 @@ Reused recordings: the numbers one to five are from Light the Lanterns (`../ligh
 
 ## Changing a recording
 
-Every voice clip is in the `VOICE` object near the bottom of `index.html`: `1` … `5`, `right`, `playAgain`, `intro1`–`intro3`,
+Every voice clip is in the `VOICE` object near the bottom of `index.html`: `1` … `5`, `right`, `playAgain`, `welcome`, `intro1`–`intro3`,
 `give1`, `more`, `tooMany`, `yum` and `wellDone`. Replace a string with the base64 of a new MP3
-(`base64 -w0 audio/too-many.mp3`), or add a new key for a line that isn't recorded yet: `welcome` or `give2`–`give5`.
-Timings come from each clip's own length, so nothing else needs adjusting. A missing clip is simply skipped (and
-**Hear how to play** hides itself until `welcome` is added).
+(`base64 -w0 audio/too-many.mp3`), or add a new key for a line that isn't recorded yet: `give2`–`give5`.
+Timings come from each clip's own length, so nothing else needs adjusting. A missing clip is simply skipped.
