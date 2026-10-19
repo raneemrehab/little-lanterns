@@ -761,6 +761,19 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   }
   function goHome() { S.token++; S.busy = false; S.phase = 'idle'; show('home'); }
 
+  // Every time a level is played, the numbers come in a new order: never the same order as the last time,
+  // never starting on the same number, and never simply counting up or down.
+  const lastPlan = {};
+  function freshPlan(level) {
+    const prev = lastPlan[level] || [];
+    const sorted = (p, dir) => p.every((v, i) => !i || (v - p[i - 1]) * dir > 0);
+    for (;;) {
+      const plan = makePlan(LEVELS[level]);
+      if (plan.join() === prev.join() || plan[0] === prev[0] || sorted(plan, 1) || sorted(plan, -1)) continue;
+      return (lastPlan[level] = plan);
+    }
+  }
+
   function makePlan(lv) {
     // Five rounds, never the same number twice in a row. Level 1 asks for each of 1, 2 and 3 at least once;
     // Levels 2–5 ask for each number in their range once, in a shuffled order; Level 6 asks for three different
@@ -777,7 +790,7 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     S.token++; S.level = level; S.round = 0; S.busy = true; S.phase = 'give'; S.lastTouch = Date.now();
     const tok = S.token, lv = LV();
     $('#eyebrow').textContent = lv.eyebrow;
-    S.plan = makePlan(lv);
+    S.plan = freshPlan(level);
     $('#check').disabled = true;
     S.berries.forEach((b) => b.remove()); S.berries = []; S.plate = [];
     setDots(0);

@@ -12,7 +12,9 @@ with three further levels up to 10.
 | 5 · To 10 by yourself | Give 6 to 10 berries from a pile of 12, silently. |
 | 6 · Mixed 1 to 10 | Give 1 to 10 berries from a pile of 12, silently: three rounds from 6 to 10 and two from 1 to 5, shuffled. |
 
-Each level has 5 rounds, never the same number twice in a row. Level 1 asks for each of 1, 2 and 3 at least once; Levels 2–5
+Each level has 5 rounds, never the same number twice in a row. Every time a level is played (including **Play again**) the
+numbers come in a new order: never the same order as last time, never starting on the same number, and never simply
+counting up or down. Level 1 asks for each of 1, 2 and 3 at least once; Levels 2–5
 ask for each number in their range once, in a shuffled order. In Levels 4–6 Hazel's plate holds two rows of five, like
 a ten frame: berries 1–5 fill the back row and 6–10 the front row. Tapping a berry hops it onto Hazel's log-slice plate; tapping a
 berry on the plate puts it back on the pile, so the child can fix their answer. When they press **Check**, the plate is
