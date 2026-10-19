@@ -42,7 +42,7 @@ Nothing is ever marked wrong, in line with all Little Lanterns games.
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole game: HTML, CSS, JavaScript, artwork and voice clips (base64). Works on its own. |
-| `audio/*.mp3` | Original Lily Pad Words recordings: `welcome`, `well-done`. Still to record: `find-the-word`, `find-the-number`, `find-the-flowers`, `look-closely`, `heres-a-clue`. |
+| `audio/*.mp3` | Original Lily Pad Words recordings: `welcome`, `find-the-word`, `find-the-number`, `find-the-flowers`, `look-closely`, `heres-a-clue`, `well-done`. |
 
 Reused recordings: one to ten and "Good guess, but try again" are from Light the Lanterns (`../light-the-lanterns/audio/`);
 "Yes! That's right!" (`right`) and "Do you want to play again, or try the next level?" (`playAgain`) are from Duck Pond
