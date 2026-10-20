@@ -241,6 +241,7 @@ export function page(ctx, { title, description = site.description, body, bodyCla
   <meta name="description" content="${esc(description)}">
   ${canonical ? `<link rel="canonical" href="${canonical}">` : ''}
   ${ctx.noindex ? '<meta name="robots" content="noindex">' : ''}
+  ${site.googleSiteVerification && ctx.path === '' ? `<meta name="google-site-verification" content="${esc(site.googleSiteVerification)}">` : ''}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${site.name}">
   <meta property="og:title" content="${esc(fullTitle)}">

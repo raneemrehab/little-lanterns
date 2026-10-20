@@ -175,6 +175,21 @@
     });
   });
 
+  // ---- Backup inbox ------------------------------------------------------------------
+  // If the WhatsApp relay can't send (not set up yet, or WhatsApp is down),
+  // the message is saved as a Netlify Forms submission instead, which Netlify
+  // can email to the owner. The matching hidden "messages" form is on the
+  // Help centre page, where Netlify finds it when the site is deployed.
+  window.LLInbox = function (fields) {
+    var body = new URLSearchParams();
+    body.append('form-name', 'messages');
+    Object.keys(fields).forEach(function (k) { if (fields[k] && k !== '_gotcha' && k !== 'form-name') body.append(k, fields[k]); });
+    if (fields._gotcha) return Promise.resolve(true);
+    return fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+      .then(function (res) { return res.ok; })
+      .catch(function () { return false; });
+  };
+
   // ---- Forms (only rendered when a real endpoint is configured) ---------------------
   document.querySelectorAll('form[data-enhanced-form]').forEach(function (form) {
     var out = form.querySelector('.form-status');
@@ -199,9 +214,13 @@
       var btn = form.querySelector('button[type=submit]');
       btn.disabled = true;
       out.textContent = 'Sending…';
-      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
-        .then(function (res) {
-          if (!res.ok) throw new Error('bad');
+      var data = new FormData(form);
+      var fields = {};
+      data.forEach(function (v, k) { fields[k] = v; });
+      fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
+        .then(function (res) { return res.ok || window.LLInbox(fields); }, function () { return window.LLInbox(fields); })
+        .then(function (sent) {
+          if (!sent) throw new Error('bad');
           form.reset();
           out.textContent = 'Thank you! Your message is on its way, and we’ll be in touch.';
         })

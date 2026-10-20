@@ -37,8 +37,18 @@ instead of the CallMeBot key. Messages then come from your business number.
 Meta only delivers free-form messages to a number that has messaged the
 business number in the last 24 hours, so CallMeBot is the simpler start.
 
-Until these are set, the chat box says "our chat isn't switched on just yet".
 Test it by sending a message from the site's **Questions?** button.
+
+**Backup inbox.** If WhatsApp isn't set up yet, or a message can't be sent,
+the chat box and the forms save the message in Netlify Forms instead, so
+nothing is lost. To switch this on (once):
+
+1. In Netlify, open **Forms** and click **Enable form detection**, then
+   redeploy (**Deploys → Trigger deploy**).
+2. A form called **messages** appears. Open **Forms → Form notifications →
+   Add notification → Email notification** and enter your email address.
+
+Every backup message then arrives by email and is listed under **Forms**.
 
 To try it locally: `WHATSAPP_NUMBER=… CALLMEBOT_API_KEY=… npm run serve`.
 
