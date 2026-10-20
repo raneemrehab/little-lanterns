@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lantern Lookout · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.sky{display:grid;grid-template-columns:repeat(var(--cols,4),auto);gap:2.4cqmin 3cqmin;justify-content:center}
+.lan{min-width:12cqmin;min-height:14cqmin;padding:.6cqmin;background:transparent;box-shadow:none}
+.lan svg{width:11cqmin;height:14cqmin;transition:filter .3s}
+.lan.found svg{filter:drop-shadow(0 0 2.4cqmin #f5d57a)}
+.lan.found{box-shadow:none;transform:translateY(-1cqmin)}
+.lan.dim svg{opacity:.55}
+.lan.show-diff{animation:wiggle .6s ease 2}
+.top{display:flex;align-items:center;gap:3cqmin}
+.left{font:800 4cqmin/1 var(--body);background:rgba(255,253,248,.9);color:var(--g-ink);padding:1.4cqmin 2.6cqmin;border-radius:999px}
+.string{display:flex;gap:1cqmin;min-height:6cqmin;align-items:flex-end}
+.string i{width:3.4cqmin;height:4.4cqmin;border-radius:40%;background:var(--g-butter);box-shadow:0 0 1.6cqmin rgba(245,213,122,.9);animation:pop .3s ease both}
+.port .sky{gap:2cqmin}
+.port .lan{min-width:13cqmin}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Lantern Lookout (Main · Looking & Listening): visual scanning and discrimination.
+   Voice: LL-LIT-G13-VO01…VO12 and the shared narrator lines. */
+(() => {
+  // Lantern symbols. Look-alikes differ in one detail (star points, letter direction).
+  const star = (pts, r1 = 9, r2 = 4) => { let d = ''; for (let k = 0; k < pts * 2; k++) { const r = k % 2 ? r2 : r1, a = Math.PI * k / pts - Math.PI / 2; d += (k ? 'L' : 'M') + (20 + r * Math.cos(a)).toFixed(1) + ' ' + (26 + r * Math.sin(a)).toFixed(1); } return `<path d="${d}Z" fill="#8a6a12"/>`; };
+  const SYM = {
+    star5: star(5), star6: star(6), circle: '<circle cx="20" cy="26" r="7.5" fill="#8a6a12"/>', moon: '<path d="M24 17 A9 9 0 1 0 24 35 A7 7 0 1 1 24 17Z" fill="#8a6a12"/>',
+    heart: '<path d="M20 34 C10 27 12 18 17 18 C19 18 20 20 20 21 C20 20 21 18 23 18 C28 18 30 27 20 34Z" fill="#8a6a12"/>',
+    b: '<text x="20" y="34" text-anchor="middle" font-size="20" font-weight="800" fill="#8a6a12" font-family="Nunito Sans,sans-serif">b</text>',
+    d: '<text x="20" y="34" text-anchor="middle" font-size="20" font-weight="800" fill="#8a6a12" font-family="Nunito Sans,sans-serif">d</text>',
+    p: '<text x="20" y="34" text-anchor="middle" font-size="20" font-weight="800" fill="#8a6a12" font-family="Nunito Sans,sans-serif">p</text>',
+  };
+  const lantern = (s) => `<svg viewBox="0 0 40 52" aria-hidden="true"><rect x="15" y="1" width="10" height="5" rx="2" fill="#8a6a52"/><path d="M8 10 Q20 4 32 10 L34 40 Q20 48 6 40 Z" fill="#f5d57a" stroke="#c99a5e" stroke-width="2"/>${SYM[s]}</svg>`;
+  const NAME = { star5: 'star', star6: 'six-point star', circle: 'circle', moon: 'moon', heart: 'heart', b: 'b', d: 'd', p: 'p' };
+
+  const levels = [
+    { label: '1 · Glow (3–4)', targets: ['star5'], others: ['circle'], find: 3, total: 8, cols: 4 },
+    { label: '2 · Flame (4–5)', targets: ['star5'], others: ['star6', 'circle'], find: 3, total: 9, cols: 3 },
+    { label: '3 · Beacon (5–7)', targets: ['b'], others: ['d', 'p'], find: 3, total: 10, cols: 5 },
+    { label: '4 · Lighthouse (7–9)', targets: ['star5', 'b'], others: ['star6', 'd', 'p', 'circle'], find: 4, total: 12, cols: 4 },
+  ];
+
+  LL.game({
+    code: 'G13', name: 'Lantern Lookout', accent: '#4f8fbf', dark: true,
+    guide: { name: 'Luna the owl', kind: 'owl', color: '#8b7bb8' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #34508a 0%, #23345e 60%, #1a2546 100%)',
+    reward: { icon: '🏮' }, doneLine: 'The sky is full of light. Hoo hoo!',
+    levels, rounds: 5, intro: ['VO01'], idle: 'VO10', goodbye: 'VO12',
+    complete: ['VO11', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G13-') || k.startsWith('SH-')),
+    async levelStart(c) { await c.say('VO02', 'instruction'); },   // Look at my lantern. Find every one that's exactly the same.
+
+    async round(c, i) {
+      const L = c.L;
+      // Lanterns: `find` matching ones (split between targets at Level 4), the rest look-alikes or others.
+      const syms = [];
+      for (let k = 0; k < L.find; k++) syms.push(L.targets[k % L.targets.length]);
+      while (syms.length < L.total) syms.push(L.others[syms.length % L.others.length]);
+      const order = LL.shuffle(syms);
+      const top = c.el(`<div class="top"><div class="target" aria-label="Luna's lantern">${L.targets.map((t) => `<span class="lan">${lantern(t)}</span>`).join('')}</div><span class="left" id="left"></span></div>`);
+      const sky = c.el(`<div class="sky" style="--cols:${L.cols}"></div>`);
+      const string = c.el(`<div class="string" aria-hidden="true"></div>`);
+      const items = order.map((s) => { const b = c.el(`<button class="opt lan" type="button" aria-label="${NAME[s]} lantern">${lantern(s)}</button>`); b.dataset.ok = L.targets.includes(s) ? '1' : '0'; sky.appendChild(b); return { el: b, ok: L.targets.includes(s), s }; });
+      c.area.replaceChildren(top, sky, string);
+      let left = L.find;
+      const showLeft = () => { c.area.querySelector('#left').textContent = `${left} to find`; };
+      showLeft();
+
+      c.setPrompt(() => c.say('VO03', 'question'));
+      c.setClue(async () => {                                      // Try looking from this side to that side.
+        await c.say('VO06', 'instruction');
+        for (const it of items) { if (!it.el.classList.contains('found')) { c.restart(it.el, 'bounce'); await c.wait(90); } }
+      });
+      await c.say('VO03', 'question');                              // Find all the lanterns like this one.
+      if (i === 0) await c.hearAgainTip();
+
+      while (left > 0) {
+        const live = items.filter((it) => !it.el.classList.contains('found'));
+        const tapped = await c.tap(live.map((it) => it.el), { nudge: live.map((it) => it.el) });
+        const it = items.find((x) => x.el === tapped);
+        await c.busy(async () => {
+          if (it.ok) {
+            tapped.classList.add('found'); c.sparkle(tapped); c.sfx.chime();
+            string.appendChild(document.createElement('i'));
+            left--; showLeft();
+            if (left === 0) return;
+            await c.say('VO08', 'praise');                          // Found one!
+            if (left === 2) await c.say('VO04', 'transition');      // Two more to find.
+            if (left === 1) await c.say('VO05', 'transition');      // One more to find.
+          } else {
+            c.sfx.soft(); tapped.classList.add('show-diff');
+            c.area.querySelector('.target').classList.add('wiggle');
+            await c.say('VO07', 'retry');                            // Look closely. Is it the same?
+            tapped.classList.remove('show-diff'); c.area.querySelector('.target').classList.remove('wiggle');
+          }
+        });
+      }
+      await c.busy(async () => { c.hop(); await c.say('VO09', 'praise'); });   // You found them all!
+    },
+  });
+})();
+</script>
+</body>
+</html>

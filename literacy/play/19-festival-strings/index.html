@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Festival Strings · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.string{display:flex;gap:2cqmin;padding:3cqmin 3cqmin 0;border-top:.5cqmin solid #8a6a52;border-radius:50% 50% 0 0/3cqmin 3cqmin 0 0;align-items:flex-start;position:relative}
+.lamp{position:relative;display:inline-block;width:8cqmin;height:10cqmin;border-radius:40% 40% 45% 45%;box-shadow:inset 0 -1.4cqmin 0 rgba(0,0,0,.15);transition:filter .2s,transform .2s;flex:0 0 auto}
+.lamp.tall{width:6.4cqmin;height:12cqmin;border-radius:30%}
+.lamp.r{background:#e7836c}.lamp.y{background:#f5d57a}.lamp.b{background:#86bde3}.lamp.g{background:#93b795}
+.lamp.q{background:none;border:.6cqmin dashed #8a6a52;display:grid;place-items:center;font:800 5cqmin/1 var(--body);box-shadow:none;color:#8a6a52}
+.lamp.on{filter:drop-shadow(0 0 2.4cqmin #f5d57a) brightness(1.1);transform:translateY(-1cqmin)}
+.box{position:absolute;top:1.4cqmin;height:13.4cqmin;border:.6cqmin dashed #7d6cc0;border-radius:2cqmin;pointer-events:none}
+.choices .opt{min-width:14cqmin;min-height:15cqmin}
+.mine{display:flex;gap:2cqmin}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Festival Strings (Main · Patterns & Order): patterns. Voice: LL-LIT-G19-VO01…VO13 and the shared narrator lines.
+   The chant uses the recorded colour words (red, yellow, blue, green). Shapes are not named aloud (no recordings). */
+(() => {
+  const SAY = { r: 'VO07', y: 'VO08', b: 'VO09', g: 'VO10' };
+  const NAME = { r: 'red', y: 'yellow', b: 'blue', g: 'green' };
+  const levels = [
+    { label: '1 · Glow (3–4)', units: ['AB'] },
+    { label: '2 · Flame (4–5)', units: ['ABB', 'AAB'] },
+    { label: '3 · Beacon (5–7)', units: ['ABC'], missing: true },
+    { label: '4 · Lighthouse (7–9)', units: ['AB', 'ABB'], shapes: true, make: true },
+  ];
+  // A lantern is colour + shape ('' round or 'tall').
+  const lamp = (l, cls = '') => `<span class="lamp ${l.c} ${l.s || ''} ${cls}" aria-hidden="true"></span>`;
+  const label = (l) => `${l.s ? 'tall ' : ''}${NAME[l.c]} lantern`;
+
+  function makePattern(L, i) {
+    const unitStr = L.units[i % L.units.length];
+    const cols = LL.shuffle(['r', 'y', 'b', 'g']);
+    const shapes = LL.shuffle(['', 'tall']);
+    const letters = [...new Set(unitStr)];
+    const map = {}; letters.forEach((ch, k) => { map[ch] = { c: cols[k], s: L.shapes ? shapes[k % 2] : '' }; });
+    // At Level 4 two features change: the same colour can come in both shapes.
+    if (L.shapes && letters.length === 2) map.B = { c: map.A.c === cols[0] ? cols[1] : cols[0], s: map.A.s ? '' : 'tall' };
+    const unit = [...unitStr].map((ch) => map[ch]);
+    const seq = []; while (seq.length < unit.length * (unit.length === 2 ? 3 : 2)) seq.push(...unit);
+    return { unit, seq };
+  }
+  const same = (a, b) => a.c === b.c && (a.s || '') === (b.s || '');
+
+  LL.game({
+    code: 'G19', name: 'Festival Strings', accent: '#5f8a64',
+    guide: { name: 'Poppy the panda', kind: 'panda', color: '#f4f1ea' },
+    bg: 'linear-gradient(180deg,#f7e3c4 0%,#f3d3b0 55%,#e9c29a 100%)',
+    reward: { icon: '🎆' }, doneLine: 'The festival is ready!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO13',
+    complete: ['VO12', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G19-') || k.startsWith('SH-')),
+    async levelStart(c) { await c.say('VO02', 'instruction'); },     // Look at the pattern. Which lantern comes next?
+
+    async round(c, i) {
+      const L = c.L;
+      if (L.make && i === 4) return makeOwn(c);
+      const { unit, seq } = makePattern(L, i);
+      const missing = L.missing && i % 2 === 1 ? unit.length + Math.floor(Math.random() * unit.length) : -1;
+      const shown = missing >= 0 ? seq : seq.slice(0, seq.length - 1);
+      const answer = missing >= 0 ? seq[missing] : seq[seq.length - 1];
+      const string = c.el(`<div class="string"></div>`);
+      shown.forEach((l, k) => string.insertAdjacentHTML('beforeend', k === missing ? lamp(l, 'q') : lamp(l)));
+      if (missing < 0) string.insertAdjacentHTML('beforeend', '<span class="lamp q">?</span>');
+      const q = string.querySelector('.q'); if (q) { q.className = 'lamp q'; q.textContent = '?'; }
+      const opts = [answer, ...unit.filter((u) => !same(u, answer))];
+      if (L.shapes) opts.push({ c: answer.c, s: answer.s ? '' : 'tall' });      // same colour, other shape
+      const uniq = opts.filter((o, k) => opts.findIndex((x) => same(x, o)) === k).slice(0, 4);
+      const row = c.el(`<div class="row choices"></div>`);
+      const items = LL.shuffle(uniq).map((l) => { const b = c.el(`<button class="opt" type="button" aria-label="${label(l)}">${lamp(l)}</button>`); row.appendChild(b); return { el: b, ok: same(l, answer), l }; });
+      c.area.replaceChildren(string, row);
+
+      const lamps = () => [...string.querySelectorAll('.lamp')];
+      async function chant(from = 0, to = lamps().length) {
+        const all = lamps(), list = missing >= 0 ? seq : [...seq.slice(0, seq.length - 1), answer];
+        for (let k = from; k < to; k++) { all[k].classList.add('on'); await c.say(SAY[list[k].c], 'count'); all[k].classList.remove('on'); }
+      }
+      async function boxUnit() {                                     // the repeating unit is boxed and chanted
+        const all = lamps(), sr = string.getBoundingClientRect(), a = all[0].getBoundingClientRect(), b = all[unit.length - 1].getBoundingClientRect();
+        const box = c.el(`<span class="box" style="left:${a.left - sr.left - 6}px;width:${b.right - a.left + 12}px"></span>`);
+        string.appendChild(box);
+        await c.say('VO06', 'transition');                           // Let's say it together.
+        await chant(0, unit.length); await chant(unit.length, unit.length * 2);
+        box.remove();
+      }
+      const ask = missing >= 0 ? 'VO04' : 'VO03';
+      c.setPrompt(() => c.say(ask, 'question'));
+      c.setClue(() => boxUnit());
+      await c.say(ask, 'question');
+      if (i === 0) await c.hearAgainTip();
+      await c.choice({ items, miss2: async () => { await boxUnit(); }, reduce: true });
+      await c.busy(async () => {
+        const q2 = string.querySelector('.q'); q2.className = `lamp ${answer.c} ${answer.s || ''}`; q2.textContent = '';
+        await c.wait(300);
+        await chant();                                               // the string lights in rhythm, saying the pattern
+        await c.say('VO11', 'praise');                               // You kept the pattern going!
+      });
+    },
+  });
+
+  // Level 4, last round: the child makes a pattern of six for Poppy; any repeating pattern is celebrated.
+  async function makeOwn(c) {
+    const slots = c.el(`<div class="string mine"></div>`);
+    for (let k = 0; k < 6; k++) slots.insertAdjacentHTML('beforeend', '<span class="lamp q">?</span>');
+    const row = c.el(`<div class="row choices"></div>`);
+    const pal = ['r', 'y', 'b', 'g'].map((col) => { const b = c.el(`<button class="opt" type="button" aria-label="${NAME[col]} lantern">${lamp({ c: col })}</button>`); b.dataset.ok = '1'; row.appendChild(b); return [b, col]; });
+    c.area.replaceChildren(slots, row);
+    c.setPrompt(() => c.say('VO05', 'question'));
+    await c.say('VO05', 'question');                                 // Now make your own pattern for me!
+    for (;;) {
+      const made = [];
+      [...slots.children].forEach((s) => { s.className = 'lamp q'; s.textContent = '?'; });
+      while (made.length < 6) {
+        const b = await c.tap(pal.map((p) => p[0]), { idle: 'VO05' });
+        const col = pal.find((p) => p[0] === b)[1];
+        const s = slots.children[made.length]; s.className = `lamp ${col}`; s.textContent = ''; c.sfx.pop();
+        made.push(col);
+      }
+      const isPattern = [2, 3].some((u) => made.every((m, k) => m === made[k % u])) && new Set(made).size > 1;
+      let ok = false;
+      await c.busy(async () => {
+        for (let k = 0; k < 6; k++) { slots.children[k].classList.add('on'); await c.say(SAY[made[k]], 'count'); slots.children[k].classList.remove('on'); }
+        if (isPattern) { c.sparkle(slots); await c.say('VO11', 'praise'); ok = true; }
+        else { await c.say('VO06', 'transition'); await c.say('VO05', 'question'); }
+      });
+      if (ok) return;
+    }
+  }
+})();
+</script>
+</body>
+</html>

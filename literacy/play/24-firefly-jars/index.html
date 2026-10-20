@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Firefly Jars · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.jars{display:flex;gap:4cqmin}
+.jar{position:relative;width:34cqmin;height:36cqmin;border-radius:5cqmin 5cqmin 4cqmin 4cqmin;background:rgba(220,236,246,.18);border:.8cqmin solid rgba(255,253,248,.8);border-top:3cqmin solid #c99a5e}
+.two .jar{width:28cqmin;height:34cqmin}
+.ff{all:unset;position:absolute;width:7.5cqmin;height:7.5cqmin;margin:-3.75cqmin;border-radius:50%;cursor:pointer;background:radial-gradient(circle,#fff7c2 0 30%,#f5d57a 45%,rgba(245,213,122,0) 72%);display:grid;place-items:center;color:#263238;font:800 3.4cqmin/1 var(--body);touch-action:manipulation}
+.ff.lit{background:radial-gradient(circle,#fffbe0 0 40%,#f5d57a 60%,rgba(245,213,122,.3) 80%);box-shadow:0 0 3cqmin 1cqmin rgba(245,213,122,.8)}
+.ff.flutter{animation:flutter 2.6s ease-in-out infinite alternate}
+@keyframes flutter{0%{transform:translate(0,0)}50%{transform:translate(1.6cqmin,-1.2cqmin)}100%{transform:translate(-1.2cqmin,1cqmin)}}
+.nums .opt{min-width:15cqmin;min-height:13cqmin;font:800 7cqmin/1 var(--display)}
+.bar{display:flex;gap:2cqmin;align-items:center}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Firefly Jars (Main · Number Foundations): counting and "how many". Voice: LL-LIT-G24-VO01…VO10, the shared
+   narrator lines and the number words 0–20 already recorded for the maths games (NUM-n). */
+(() => {
+  const levels = [
+    { label: '1 · Glow (3–4)', range: [1, 5] },
+    { label: '2 · Flame (4–5)', range: [3, 10] },
+    { label: '3 · Beacon (5–6)', range: [4, 10], flutter: true },
+    { label: '4 · Beacon (6–7)', range: [11, 20], jars: 2 },
+  ];
+  let plan = [], askedCheck = false;
+  // Spots inside a jar (in % of the jar), spread so fireflies never overlap.
+  const SPOTS = [[25, 22], [50, 18], [75, 24], [30, 44], [56, 40], [78, 50], [22, 66], [48, 62], [72, 74], [36, 84], [62, 86], [16, 86]];
+
+  LL.game({
+    code: 'G24', name: 'Firefly Jars', accent: '#3e8a86', dark: true,
+    guide: { name: 'Flick the firefly', kind: 'firefly', color: '#f5d57a' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #2f4f6b 0%, #223a52 60%, #182a3d 100%)',
+    reward: { icon: '🫙' }, doneLine: 'All your jars are glowing!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO10',
+    complete: ['VO09', 'SH-VO03'],
+    preload: (lv) => [...Object.keys(window.LL_LINES).filter((k) => k.startsWith('G24-') || k.startsWith('SH-')), ...Array.from({ length: 21 }, (_, n) => 'NUM-' + n)],
+    async levelStart(c) {
+      const [lo, hi] = c.L.range; plan = [];
+      while (plan.length < 5) { const n = lo + Math.floor(Math.random() * (hi - lo + 1)); if (n !== plan[plan.length - 1]) plan.push(n); }
+      await c.say('VO02', 'instruction');                           // Tap each firefly to count it. Then tap how many.
+    },
+    async round(c, i) {
+      const L = c.L, n = plan[i];
+      const jarsN = L.jars || 1, perJar = jarsN === 2 ? [Math.ceil(n / 2), Math.floor(n / 2)] : [n];
+      const wrap = c.el(`<div class="jars ${jarsN === 2 ? 'two' : ''}"></div>`);
+      const flies = [];
+      perJar.forEach((m) => {
+        const jar = c.el(`<div class="jar"></div>`); wrap.appendChild(jar);
+        LL.shuffle(SPOTS).slice(0, m).forEach(([x, y], k) => {
+          const f = c.el(`<button class="ff${L.flutter && k % 3 === 0 ? ' flutter' : ''}" type="button" aria-label="Firefly" style="left:${x}%;top:${y}%"></button>`);
+          f.style.animationDelay = (-Math.random() * 2) + 's';
+          jar.appendChild(f); flies.push(f);
+        });
+      });
+      const again = c.el(`<button class="btn" type="button" id="countAgain" aria-label="Count again">↺ Count again</button>`);
+      const bar = c.el(`<div class="bar"></div>`); bar.appendChild(again);
+      c.area.replaceChildren(wrap, bar);
+      let counted = 0, usedAgain = false;
+      const reset = () => { counted = 0; flies.forEach((f) => { f.classList.remove('lit'); f.textContent = ''; }); };
+      // Counting: each tap lights a firefly, shows its number and says it. Counted fireflies don't count twice.
+      const countOne = async (f) => {
+        if (f.classList.contains('lit')) { c.restart(f, 'bounce'); return; }
+        counted++; f.classList.add('lit'); f.textContent = counted; c.sfx.tick(counted);
+        c.say('NUM-' + counted, 'count').catch(() => {});
+      };
+      c.setClue(() => c.say('VO05', 'instruction'));                // Touch each one once.
+      if (i === 0) await c.hearAgainTip();
+      // Phase 1: count every firefly (taps on Count again start over).
+      flies.forEach((f) => { f.dataset.ok = '1'; });
+      while (counted < n) {
+        const t = await c.tap([...flies.filter((f) => !f.classList.contains('lit')), again], { idle: 'VO05' });
+        if (t === again) { usedAgain = counted > 0; reset(); continue; }
+        await countOne(t);
+      }
+      // Phase 2: how many?
+      const choices = LL.shuffle([n, n > 1 ? n - 1 : n + 2, n + 1]);
+      const row = c.el(`<div class="row nums"></div>`);
+      const items = choices.map((v) => { const b = c.el(`<button class="opt" type="button" aria-label="${v}">${v}</button>`); row.appendChild(b); return { el: b, ok: v === n, v }; });
+      bar.prepend(row);
+      await c.wait(400);
+      c.setPrompt(() => c.say('VO03', 'question'));
+      await c.say('VO03', 'question');                              // How many fireflies?
+      if (!askedCheck) { askedCheck = true; c.restart(again, 'bounce'); await c.say('VO04', 'question'); }   // Want to count again to check?
+      let misses = 0;
+      for (;;) {
+        items.forEach((it) => { it.el.dataset.ok = it.ok ? '1' : '0'; });
+        const t = await c.tap([...items.map((it) => it.el), again]);
+        if (t === again) {                                           // count again to check, then answer
+          usedAgain = true; reset();
+          while (counted < n) { const f = await c.tap(flies.filter((x) => !x.classList.contains('lit')), { idle: 'VO05' }); await countOne(f); }
+          await c.wait(300); await c.say('VO03', 'question');
+          continue;
+        }
+        const it = items.find((x) => x.el === t);
+        if (it.ok) {
+          await c.busy(async () => {
+            t.classList.add('ans'); c.sparkle(wrap); c.sfx.chime();
+            await c.say('NUM-' + n, 'count');
+            await c.say(usedAgain ? 'VO08' : 'VO07', 'praise');     // You checked! Great thinking. / You counted carefully!
+          });
+          return;
+        }
+        misses++;
+        await c.busy(async () => {
+          c.restart(t, 'wiggle'); c.sfx.soft();
+          await c.say('VO06', 'retry');                              // Let's count them together.
+          reset();
+          for (const f of flies) { counted++; f.classList.add('lit'); f.textContent = counted; await c.say('NUM-' + counted, 'count'); }
+          await c.say('VO03', 'question');
+        });
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

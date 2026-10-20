@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inspector · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.jobs{display:flex;flex-wrap:wrap;gap:2.4cqmin;justify-content:center;max-width:100%}
+.job{min-width:19cqmin;min-height:20cqmin;padding:1.4cqmin}
+.job .em{font-size:9cqmin;line-height:1.1}
+.job .lab{font:800 3.6cqmin/1 'Nunito Sans',sans-serif;background:#f1ece2;padding:.8cqmin 1.6cqmin;border-radius:1cqmin;margin-top:.6cqmin}
+.job.checked::before{content:"✓";position:absolute;top:-2cqmin;left:-2cqmin;width:6cqmin;height:6cqmin;border-radius:50%;background:#e8c35a;color:#263238;display:grid;place-items:center;font:800 3.6cqmin/1 var(--body)}
+.job.slip{box-shadow:0 0 0 1cqmin #f5d57a,0 0 5cqmin rgba(245,213,122,.8)}
+.job.fixed::after{content:"★";position:absolute;top:-2.4cqmin;right:-2cqmin;width:6cqmin;height:6cqmin;border-radius:50%;background:var(--g-butter);display:grid;place-items:center;font-size:3.6cqmin}
+.dotsrow{display:flex;gap:.8cqmin}
+.dotsrow i{width:3.4cqmin;height:3.4cqmin;border-radius:50%}
+.c-r{background:#e7836c}.c-b{background:#86bde3}.c-y{background:#f5d57a}.c-g{background:#93b795}
+.apples{font-size:4cqmin;max-width:16cqmin;line-height:1.1;text-align:center}
+.fix .opt{min-width:14cqmin;min-height:11cqmin;font:800 4.6cqmin/1 'Nunito Sans',sans-serif}
+.allok{background:var(--g-teal);color:#fffdf8}
+.mag{font-size:5cqmin}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Inspector (Main · Thinking Control): checking work. Voice: LL-LIT-G18-VO01…VO12, shared narrator lines, number
+   words (NUM-n) and the word recordings cat, dog, fish, hat, sun (LL-LIT-WD-*). */
+(() => {
+  const PIC = window.LL_PICS;
+  const WORDS = ['cat', 'dog', 'fish', 'hat', 'sun'];
+  const MISSPELL = { cat: ['cta', 'kat'], dog: ['dgo', 'dob'], fish: ['fsih', 'fihs'], hat: ['hta', 'hat'.replace('a', 'o')], sun: ['snu', 'sum'] };
+  const COLS = ['r', 'b', 'y', 'g'];
+  const levels = [
+    { label: '1 · Flame (4–5)', n: 3, kinds: ['label'], slips: 1 },
+    { label: '2 · Beacon (5–6)', n: 5, kinds: ['label', 'count', 'pattern'], slips: 1 },
+    { label: '3 · Beacon (6–7)', n: 5, kinds: ['label', 'count', 'pattern'], slips: 1, maybe: true },
+    { label: '4 · Lighthouse (7–9)', n: 5, kinds: ['label', 'count', 'pattern', 'spell'], slips: 2 },
+  ];
+  // A job: what it shows, whether it's a slip, and how to fix it.
+  function makeJob(kind, slip) {
+    if (kind === 'label' || kind === 'spell') {
+      const w = LL.pick(WORDS);
+      const wrong = kind === 'spell' ? LL.pick(MISSPELL[w]) : LL.pick(WORDS.filter((x) => x !== w));
+      const fixes = kind === 'spell' ? LL.shuffle([w, ...MISSPELL[w]]) : LL.shuffle([w, ...LL.shuffle(WORDS.filter((x) => x !== w)).slice(0, 2)]);
+      return { kind, w, slip, html: (good) => `<span class="em">${PIC[w]}</span><span class="lab">${good ? w : wrong}</span>`, fixes: fixes.map((f) => ({ html: f, ok: f === w, say: WORDS.includes(f) ? 'WD-' + f : null })), sayAfter: 'WD-' + w };
+    }
+    if (kind === 'count') {
+      const n = 2 + Math.floor(Math.random() * 4), shown = n + (Math.random() < 0.5 ? -1 : 1);
+      return { kind, n, slip, html: (good) => `<span class="apples">${'🍎'.repeat(n)}</span><span class="lab">${good ? n : shown}</span>`, fixes: LL.shuffle([n, shown, n + (shown > n ? -1 : 1) || n + 2]).map((v) => ({ html: v, ok: v === n, say: 'NUM-' + v })), sayAfter: 'NUM-' + n };
+    }
+    const [a, b] = LL.shuffle(COLS);
+    const seq = [a, b, a, b, a, b], bad = seq.slice(); bad[5] = a;
+    return { kind, slip, html: (good) => `<span class="dotsrow">${(good ? seq : bad).map((x) => `<i class="c-${x}"></i>`).join('')}</span>`, fixes: LL.shuffle([b, a, LL.pick(COLS.filter((x) => x !== a && x !== b))]).map((x) => ({ html: `<span class="dotsrow"><i class="c-${x}"></i></span>`, ok: x === b })) };
+  }
+
+  LL.game({
+    code: 'G18', name: 'Inspector', accent: '#d06a52',
+    guide: { name: 'Rory the raccoon', kind: 'raccoon', color: '#8d8a86' },
+    bg: 'linear-gradient(180deg,#f3ead8 0%,#ead9bd 60%,#dcc49c 100%)',
+    reward: { icon: '🔎' }, doneLine: 'Inspector badge earned!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO12',
+    complete: ['VO11', 'SH-VO03'],
+    preload: () => [...Object.keys(window.LL_LINES).filter((k) => k.startsWith('G18-') || k.startsWith('SH-')), ...WORDS.map((w) => 'WD-' + w), ...Array.from({ length: 8 }, (_, n) => 'NUM-' + n)],
+    async levelStart(c) { await c.say('VO02', 'instruction'); },     // Look at each one carefully. Tap the one that isn't right.
+    async round(c, i) {
+      const L = c.L;
+      const noSlip = L.maybe && (i === 1 || i === 3);                // two rounds where everything is right
+      const slipCount = noSlip ? 0 : L.slips;
+      let kinds = Array.from({ length: L.n }, (_, k) => L.kinds[k % L.kinds.length]);
+      if (L.slips === 2) kinds[0] = 'spell';
+      kinds = LL.shuffle(kinds);
+      const slipIdx = new Set(LL.shuffle(kinds.map((k, q) => q).filter((q) => slipCount === 2 ? true : kinds[q] !== 'spell')).slice(0, slipCount));
+      if (L.slips === 2 && !kinds.some((k, q) => k === 'spell' && slipIdx.has(q))) { slipIdx.delete([...slipIdx][0]); slipIdx.add(kinds.indexOf('spell')); }
+      const jobs = kinds.map((k, q) => makeJob(k === 'spell' && !slipIdx.has(q) ? 'label' : k, slipIdx.has(q)));
+      const box = c.el(`<div class="jobs"></div>`);
+      jobs.forEach((j, q) => { j.el = c.el(`<button class="opt job" type="button" aria-label="Job ${q + 1}">${j.html(!j.slip)}</button>`); j.el.dataset.ok = j.slip ? '1' : '0'; box.appendChild(j.el); });
+      const allOk = L.maybe ? c.el(`<button class="btn allok" type="button" aria-label="All correct">✓ All correct</button>`) : null;
+      if (allOk) allOk.dataset.ok = noSlip ? '1' : '0';
+      c.area.replaceChildren(box, ...(allOk ? [allOk] : []));
+      const ask = L.maybe ? 'VO04' : 'VO03';
+      c.setPrompt(() => c.say(ask, 'question'));
+      c.setClue(async () => { await c.say('VO06', 'instruction'); for (const j of jobs) { c.restart(j.el, 'bounce'); await c.wait(250); } });
+      await c.say(ask, 'question');                                  // One thing isn't right. Can you find it?
+      if (i === 0) await c.hearAgainTip();
+      let left = slipCount;
+      for (;;) {
+        const live = jobs.filter((j) => !j.fixed).map((j) => j.el);
+        const t = await c.tap([...live, ...(allOk ? [allOk] : [])], { idle: 'VO06' });
+        if (t === allOk) {
+          if (left === 0) { await c.busy(async () => { c.sparkle(allOk); c.sfx.chime(); await c.say('VO09', 'praise'); }); return; }   // Yes, it's all correct!
+          await c.busy(async () => { c.restart(allOk, 'wiggle'); await c.say('VO03', 'question'); });
+          continue;
+        }
+        const j = jobs.find((x) => x.el === t);
+        if (!j.slip) {                                               // a right item gets a gold check: checking is good work too
+          await c.busy(async () => { t.classList.add('checked'); c.sfx.tick(3); await c.say('VO10', 'retry'); });   // That one's correct. Keep checking.
+          continue;
+        }
+        // Found the slip: fix it
+        await c.busy(async () => { t.classList.add('slip'); c.sfx.chime(); await c.say('VO07', 'praise'); });   // Found it!
+        const fix = c.el(`<div class="row fix"></div>`);
+        const items = j.fixes.map((f) => { const b = c.el(`<button class="opt" type="button">${f.html}</button>`); fix.appendChild(b); return { el: b, ok: f.ok, f }; });
+        c.area.appendChild(fix);
+        c.setPrompt(() => c.say('VO05', 'question'));
+        await c.say('VO05', 'question');                             // Now fix it!
+        await c.choice({ items, reduce: false, onTap: (it) => (it.f.say ? c.busy(() => c.say(it.f.say, 'count')) : null) });
+        await c.busy(async () => {
+          fix.remove(); j.fixed = true; t.classList.remove('slip'); t.classList.add('fixed'); t.innerHTML = j.html(true);
+          await c.say('VO08', 'praise');                             // Fixed! Great checking.
+        });
+        c.setPrompt(() => c.say(ask, 'question'));
+        if (--left === 0) return;
+        await c.say('VO03', 'question');
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

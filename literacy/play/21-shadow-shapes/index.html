@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shadow Shapes · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.board{display:flex;gap:5cqmin;align-items:center}
+.shadow{position:relative;width:40cqmin;height:40cqmin}
+.slot{all:unset;position:absolute;box-sizing:border-box}
+.shp{position:absolute;inset:0;background:rgba(38,50,56,.32)}
+.outline .shp{background:rgba(38,50,56,.32)}
+.slot .shp{transform:rotate(var(--r))}
+.slot.filled .shp{background:var(--fill)}
+.slot.over .shp,.slot.ready.hint .shp{background:rgba(38,50,56,.48)}
+.tray{display:flex;flex-wrap:wrap;gap:2.4cqmin;max-width:44cqmin;justify-content:center;align-items:center}
+.pc{position:relative;min-width:0;min-height:0;width:14cqmin;height:14cqmin;padding:0;background:transparent;box-shadow:none}
+.pc .shp{transform:rotate(var(--r));transition:transform .25s;background:var(--fill)}
+.pc.sel .shp{filter:drop-shadow(0 0 1.4cqmin #f5d57a)}
+.tri{clip-path:polygon(50% 0,100% 100%,0 100%)}
+.circ{border-radius:50%}
+.semi{clip-path:ellipse(50% 100% at 50% 100%)}
+.sq,.bar,.post{border-radius:.8cqmin}
+.turn{font-size:4cqmin}
+.turn.glow{animation:glow 1s ease-in-out infinite alternate}
+.side{display:flex;flex-direction:column;gap:2.4cqmin;align-items:center}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Shadow Shapes (Main · Patterns & Order): spatial puzzles. Voice: LL-LIT-G21-VO01…VO09 and the shared narrator lines.
+   Only the house has its own "You made a…!" recording; the other pictures finish with a chime and sparkles. */
+(() => {
+  const FILL = { tri: '#e7836c', circ: '#86bde3', semi: '#ae9fd8', sq: '#f5d57a', bar: '#93b795', post: '#c99a5e' };
+  // Pieces that look the same after a quarter or half turn.
+  const SYMM = { circ: 90, sq: 90, bar: 180, post: 180, tri: 360, semi: 360 };
+  // [type, rotation, x, y, w, h] in % of the shadow (triangles and half circles sit in square boxes so they can turn).
+  const PICS = {
+    circle: [['circ', 0, 25, 25, 50, 50]],
+    square: [['sq', 0, 25, 25, 50, 50]],
+    triangle: [['tri', 0, 20, 20, 60, 60]],
+    house: [['sq', 0, 20, 45, 60, 50], ['tri', 0, 15, 0, 70, 45]],
+    tree: [['tri', 0, 15, 0, 70, 60], ['post', 0, 40, 60, 20, 38]],
+    snowman: [['circ', 0, 32, 2, 36, 36], ['circ', 0, 20, 38, 60, 60]],
+    boat: [['semi', 180, 5, 55, 90, 40], ['tri', 90, 30, 5, 45, 45]],
+    fish: [['circ', 0, 38, 20, 60, 60], ['tri', 90, 0, 32, 36, 36]],
+    rocket: [['post', 0, 36, 34, 28, 64], ['tri', 0, 32, 0, 36, 36]],
+    house5: [['tri', 0, 15, 0, 70, 42], ['sq', 0, 20, 42, 30, 30], ['sq', 0, 50, 42, 30, 30], ['bar', 0, 20, 72, 60, 26], ['post', 0, 62, 4, 10, 26]],
+    castle: [['sq', 0, 10, 40, 40, 40], ['sq', 0, 50, 40, 40, 40], ['bar', 0, 10, 80, 80, 18], ['tri', 0, 10, 8, 32, 32], ['tri', 0, 58, 8, 32, 32]],
+  };
+  const NAMES = { house: 'house', house5: 'house' };
+  const levels = [
+    { label: '1 · Spark (2–3)', pics: ['circle', 'square', 'triangle', 'circle', 'square'], extra: 1 },
+    { label: '2 · Glow (3–4)', pics: ['house', 'tree', 'snowman', 'house', 'tree'], extra: 1 },
+    { label: '3 · Flame–Beacon (4–7)', pics: ['house', 'boat', 'fish', 'rocket', 'boat'], extra: 1, turning: true },
+    { label: '4 · Lighthouse (7–9)', pics: ['house5', 'castle', 'house5', 'castle', 'house5'], extra: 1, turning: true, outline: true },
+  ];
+  const fits = (p, s) => p.type === s.type && (((p.rot - s.rot) % SYMM[p.type]) + SYMM[p.type]) % SYMM[p.type] === 0;
+
+  LL.game({
+    code: 'G21', name: 'Shadow Shapes', accent: '#5f8a64',
+    guide: { name: 'Iris the cat', kind: 'cat', color: '#e0a96d' },
+    bg: 'radial-gradient(120% 90% at 30% 20%, #fff3d6 0%, #f3dfbd 50%, #e3c79c 100%)',
+    reward: { icon: '🏠' }, doneLine: 'All the shadows are filled!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO09',
+    complete: ['VO08', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G21-') || k.startsWith('SH-')),
+    async levelStart(c) { await c.say('VO02', 'instruction'); await c.dragTip(); },   // Fill the shadow with the shapes.
+    async round(c, i) {
+      const L = c.L, name = L.pics[i], spec = PICS[name];
+      const shadow = c.el(`<div class="shadow ${L.outline ? 'outline' : ''}"></div>`);
+      const slots = spec.map(([type, rot, x, y, w, h], k) => {
+        const s = c.el(`<div class="slot drop" aria-label="Space ${k + 1}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%;--r:${rot}deg;--fill:${FILL[type]}"><span class="shp ${type}"></span></div>`);
+        shadow.appendChild(s); return { el: s, type, rot, filled: false };
+      });
+      // the tray: one piece per space, plus a different one; at turning levels they start turned
+      const types = spec.map((s) => s.slice(0, 2));
+      const spare = LL.pick(['circ', 'sq', 'tri', 'semi'].filter((t) => !types.some((x) => x[0] === t))) || 'semi';
+      const pieceSpecs = LL.shuffle([...types.map(([t, r]) => ({ type: t, rot: L.turning && SYMM[t] === 360 ? (r + 90 * (1 + Math.floor(Math.random() * 3))) % 360 : r })), ...(L.extra ? [{ type: spare, rot: 0 }] : [])]);
+      const tray = c.el(`<div class="tray"></div>`);
+      const pieces = pieceSpecs.map((p) => { const b = c.el(`<button class="opt pc" type="button" aria-label="${p.type} piece" style="--r:${p.rot}deg;--fill:${FILL[p.type]}"><span class="shp ${p.type}"></span></button>`); tray.appendChild(b); p.el = b; return p; });
+      const turn = c.el(`<button class="btn turn" type="button" aria-label="Turn the piece">↻ Turn</button>`);
+      const side = c.el(`<div class="side"></div>`); side.append(tray); if (L.turning) side.append(turn);
+      const board = c.el(`<div class="board"></div>`); board.append(shadow, side);
+      c.area.replaceChildren(board);
+      let selected = null;
+      turn.addEventListener('click', () => {                        // turns the chosen piece a quarter turn
+        const p = pieces.find((x) => x.el === selected) || pieces.find((x) => !x.used && SYMM[x.type] === 360);
+        if (!p || p.used) return;
+        p.rot = (p.rot + 90) % 360; p.el.style.setProperty('--r', p.rot + 'deg'); c.sfx.tick(2); turn.classList.remove('glow');
+      });
+      c.setPrompt(() => c.say('VO03', 'question'));
+      await c.say('VO03', 'question');                               // Which piece fits here?
+      if (i === 0) await c.hearAgainTip();
+      while (slots.some((s) => !s.filled)) {
+        const live = pieces.filter((p) => !p.used);
+        live.forEach((p) => {                                        // test hooks: which space a piece fits
+          const s = slots.find((x) => !x.filled && x.type === p.type);
+          p.el.dataset.piece = '1'; p.el.dataset.target = !s ? 'none' : fits(p, s) ? s.el.getAttribute('aria-label') : 'turn';
+        });
+        const { piece, target } = await c.place({ pieces: live.map((p) => p.el), targets: slots.filter((s) => !s.filled).map((s) => s.el), onSelect: (el) => { selected = el; } });
+        selected = piece;
+        const p = pieces.find((x) => x.el === piece), s = slots.find((x) => x.el === target);
+        if (fits(p, s)) {
+          await c.busy(async () => {
+            s.filled = true; s.el.classList.add('filled'); p.used = true; piece.style.visibility = 'hidden'; selected = null;
+            c.sfx.pop(); await c.say('VO06', 'praise');                // Click! It fits.
+          });
+        } else if (p.type === s.type) {
+          await c.busy(async () => { c.restart(piece, 'wiggle'); turn.classList.add('glow'); await c.say('VO04', 'retry'); });   // Try turning it.
+        } else {
+          await c.busy(async () => { c.restart(piece, 'wiggle'); c.sfx.soft(); await c.say('VO05', 'retry'); });   // Try another piece.
+        }
+      }
+      await c.busy(async () => {
+        c.sparkle(shadow); c.sfx.chime(); c.hop();
+        if (NAMES[name] === 'house') await c.say('VO07', 'praise');  // You made a house!
+        else await c.wait(900);
+      });
+    },
+  });
+})();
+</script>
+</body>
+</html>
