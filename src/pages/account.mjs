@@ -3,16 +3,18 @@ import { button } from '../components/layout.mjs';
 import { breadcrumbs } from './explore.mjs';
 import * as d from '../components/doodles.mjs';
 
-// Parent account pages. Everything here needs the Supabase settings in
-// src/config.mjs. Without them each page explains that accounts aren't
-// switched on yet, and no form is shown.
+// Parent account pages. Signing up and logging in need the Supabase
+// settings in src/config.mjs. Without them, the sign-up and log-in pages
+// say accounts are opening soon, and the dashboard, children and settings
+// pages work on this device only (assets/js/local-client.js).
 
 const notEnabled = (h) => `
   <div class="auth-card center">
     <div class="auth-art">${d.buildingScene({ label: 'A little lantern in a hard hat, building with blocks' })}</div>
-    <h1 id="page-title">Family accounts are coming soon</h1>
-    <p class="lead">We’re getting parent accounts ready, so you’ll be able to follow your child’s learning journey here. Until then, every game is free to play without signing in.</p>
-    <div class="btn-row" style="justify-content:center">${button(h('explore/number-nook/'), 'Play maths games')}${button(h(''), 'Back to Home', { variant: 'secondary' })}</div>
+    <h1 id="page-title">Family accounts are opening soon</h1>
+    <p class="lead">You don’t need an account to play: every game is free, with no sign-up. You can already follow your child’s progress on this device. Add your child, choose who’s playing on a game page, and see which games they played each day.</p>
+    <div class="btn-row" style="justify-content:center">${button(h('account/children/#add'), 'Track progress on this device')}${button(h('account/'), 'See the progress dashboard', { variant: 'secondary' })}${button(h('explore/'), 'Play the games', { variant: 'secondary' })}</div>
+    <p class="muted mt-6">When accounts open, you’ll be able to sign up with your email and see progress on any device.</p>
   </div>`;
 
 const noscript = `<noscript><p class="form-fallback"><strong>Family accounts need JavaScript turned on in your browser.</strong></p></noscript>`;
@@ -55,6 +57,31 @@ const authShell = (h, { crumbs, title, intro, form, aside = '', art = d.lantern(
   </section>`;
 
 const status = '<p class="form-status" role="status" aria-live="polite"></p>';
+
+// Settings when progress is kept on this device rather than in an account.
+const deviceSettings = (h) => `
+      <h1 id="page-title" class="dash-title">This device</h1>
+      <div class="dash-grid">
+        <section class="form-card" aria-labelledby="s-details">
+          <h2 id="s-details" class="chart-title">Your name</h2>
+          <form class="ll-form" data-settings-form novalidate>
+            ${field('st-name', 'Your first name', '<input id="st-name" name="name" type="text" autocomplete="given-name" maxlength="60" required>', 'Used to greet you on the dashboard. It stays on this device.')}
+            <button class="btn btn-primary" type="submit">Save</button>
+            ${status}
+          </form>
+          <hr class="soft-rule">
+          <p>Want to see progress on more than one device? <a href="${h('account/sign-up/')}">Family accounts are opening soon</a>.</p>
+        </section>
+        <section class="form-card danger-zone" aria-labelledby="s-delete">
+          <h2 id="s-delete" class="chart-title">Clear this device</h2>
+          <p>This removes your children’s profiles and all of their progress from this browser. It can’t be undone.</p>
+          <form class="ll-form" data-delete-form novalidate>
+            ${field('st-confirm', 'Type DELETE to confirm', '<input id="st-confirm" name="confirm" type="text" autocomplete="off" required>')}
+            <button class="btn btn-danger" type="submit">Clear all progress</button>
+            ${status}
+          </form>
+        </section>
+      </div>`;
 
 export const signUpPage = {
   path: 'account/sign-up/',
@@ -173,22 +200,23 @@ const accountNav = (h, current) => `
   <nav class="account-nav" aria-label="Family account">
     <a href="${h('account/')}"${current === 'dash' ? ' aria-current="page"' : ''}>Dashboard</a>
     <a href="${h('account/children/')}"${current === 'kids' ? ' aria-current="page"' : ''}>Children</a>
-    <a href="${h('account/settings/')}"${current === 'settings' ? ' aria-current="page"' : ''}>Account</a>
+    <a href="${h('account/settings/')}"${current === 'settings' ? ' aria-current="page"' : ''}>${accountsEnabled ? 'Account' : 'This device'}</a>
   </nav>`;
 
 const signedInShell = (h, { current, crumbs, body }) => `
   <section class="section-tight account-section" aria-labelledby="page-title">
     <div class="container">
       ${breadcrumbs(h, crumbs)}
+      ${noscript}
       ${
         accountsEnabled
-          ? `${noscript}
-             <div data-needs-session>
-               <p class="muted" data-loading>Loading your family’s page…</p>
-               <div data-signed-in hidden>${accountNav(h, current)}${body}</div>
-             </div>`
-          : notEnabled(h)
+          ? ''
+          : `<p class="device-note">${d.sparkle()}<span><strong>Saved on this device only.</strong> No sign-up needed. Progress stays in this browser and isn’t sent to us. <a href="${h('account/sign-up/')}">About family accounts</a></span></p>`
       }
+      <div data-needs-session>
+        <p class="muted" data-loading>Loading your family’s page…</p>
+        <div data-signed-in hidden>${accountNav(h, current)}${body}</div>
+      </div>
     </div>
   </section>`;
 
@@ -197,7 +225,7 @@ export const dashboardPage = {
   noindex: true,
   title: 'Family dashboard',
   description: 'See what your child has been exploring on Learning Lanterns.',
-  scripts: accountsEnabled ? ['assets/js/charts.js', 'assets/js/dashboard.js'] : [],
+  scripts: ['assets/js/charts.js', 'assets/js/dashboard.js'],
   body: (h) =>
     signedInShell(h, {
       current: 'dash',
@@ -248,7 +276,7 @@ export const dashboardPage = {
             <div class="soon-copy">
               <h2 class="soon-title" data-empty-title>A bright journey starts here</h2>
               <p data-empty-text>Nothing to show yet. Progress will appear here as your child explores Learning Lanterns. Before a game starts, choose who’s playing at the top of the game page.</p>
-              <div class="btn-row">${button(h('explore/number-nook/'), 'Find a maths game')}</div>
+              <div class="btn-row">${button(h('explore/'), 'Find a game to play')}</div>
             </div>
           </div>
         </div>
@@ -278,6 +306,12 @@ export const dashboardPage = {
             <h2 id="c-skills" class="chart-title">Skills practised</h2>
             <p class="chart-sub">Levels finished in games that practise each skill. Only skills our games actually practise are shown.</p>
             <div data-skills></div>
+          </section>
+
+          <section class="chart-card" aria-labelledby="c-diary">
+            <h2 id="c-diary" class="chart-title">Play diary</h2>
+            <p class="chart-sub">Which games were played on which days</p>
+            <div data-diary></div>
           </section>
 
           <section class="chart-card" aria-labelledby="c-games">
@@ -313,7 +347,7 @@ export const childrenPage = {
   noindex: true,
   title: 'Your children',
   description: 'Add and edit your children’s profiles.',
-  scripts: accountsEnabled ? ['assets/js/family.js'] : [],
+  scripts: ['assets/js/family.js'],
   body: (h) =>
     signedInShell(h, {
       current: 'kids',
@@ -351,12 +385,12 @@ export const settingsPage = {
   noindex: true,
   title: 'Account settings',
   description: 'Manage your Learning Lanterns family account.',
-  scripts: accountsEnabled ? ['assets/js/family.js'] : [],
+  scripts: ['assets/js/family.js'],
   body: (h) =>
     signedInShell(h, {
       current: 'settings',
-      crumbs: [['Home', ''], ['Family dashboard', 'account/'], ['Account', 'account/settings/']],
-      body: `
+      crumbs: [['Home', ''], ['Family dashboard', 'account/'], [accountsEnabled ? 'Account' : 'This device', 'account/settings/']],
+      body: accountsEnabled ? `
       <h1 id="page-title" class="dash-title">Your account</h1>
       <div class="dash-grid">
         <section class="form-card" aria-labelledby="s-details">
@@ -380,7 +414,7 @@ export const settingsPage = {
             ${status}
           </form>
         </section>
-      </div>`,
+      </div>` : deviceSettings(h),
     }),
 };
 

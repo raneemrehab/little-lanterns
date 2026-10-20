@@ -1,6 +1,6 @@
 import { studios } from '../data/studios.mjs';
 import { accountsEnabled } from '../config.mjs';
-import { games, gamesFor } from '../data/games.mjs';
+import { games, gamesFor, comingSoonFor } from '../data/games.mjs';
 import { printables } from '../data/resources.mjs';
 import { button, sectionHead, statusPill, esc } from '../components/layout.mjs';
 import { studioCard, gameCard, gameMeta, printableCard, comingSoonPanel, studioIsOpen } from '../components/cards.mjs';
@@ -49,18 +49,63 @@ export const exploreLanding = {
       <div class="container">
         <div class="grid grid-3">${studios.map((s) => `<div class="reveal">${studioCard(s, h, { headingLevel: 2 })}</div>`).join('')}</div>
         <div class="note mt-7 tone-sage reveal">${d.sparkle({ fill: 'var(--sage)' })}
-          <p><strong>Where are we now?</strong> The Number Nook is our first studio, with maths games at its heart. The other five studios are being designed now, and each page shows what it will focus on.</p>
+          <p><strong>Where are we now?</strong> Games are ready to play in the Number Nook, Word Garden, Brain Sparks, Little Life Lab and Make &amp; Wonder, with more on the way. Every Way is being designed now, and each studio page shows what it focuses on.</p>
         </div>
       </div>
     </section>`,
 };
 
+// Every game in one place, grouped by learning area, with what's coming soon.
+export const allGamesPage = {
+  path: 'play/',
+  title: 'Games by learning area',
+  description: `All ${games.length} free Learning Lanterns games, grouped by learning area: maths, literacy, thinking skills, life skills and creative play. No sign-up needed.`,
+  body: (h) => `
+    <section class="page-hero tone-butter" aria-labelledby="page-title">
+      <div class="container page-hero-grid">
+        <div>
+          ${breadcrumbs(h, [['Home', ''], ['Games', 'play/']])}
+          <p class="eyebrow">Games</p>
+          <h1 id="page-title">Games for every learning area</h1>
+          <p class="lead">${games.length} games to play now, free and with no sign-up. Pick a learning area, or scroll to see them all.</p>
+          <ul class="area-jump">${studios
+            .map((s) => `<li><a class="tone-${s.tone}" href="#area-${s.id}">${s.name} <span>${gamesFor(s.id).length || 'Soon'}</span></a></li>`)
+            .join('')}</ul>
+        </div>
+        <div class="page-hero-art">${d.heroScene()}</div>
+      </div>
+    </section>
+    ${studios
+      .map((s, i) => {
+        const list = gamesFor(s.id);
+        const soon = comingSoonFor(s.id);
+        return `
+    <section class="section${i % 2 ? ' section-alt' : ''} tone-${s.tone}" id="area-${s.id}" aria-labelledby="area-${s.id}-title">
+      <div class="container">
+        <div class="reveal">${sectionHead({
+          eyebrow: s.subtitle,
+          title: `<span id="area-${s.id}-title">${s.name}</span>`,
+          intro: list.length ? `${list.length} game${list.length === 1 ? '' : 's'} to play${soon.length ? `, ${soon.length} coming soon` : ''}.` : 'Games for this area are being designed now.',
+          doodle: d.studioArt[s.doodle](),
+        })}</div>
+        ${
+          list.length || soon.length
+            ? `<div class="grid grid-3">${[...list, ...soon].map((g) => `<div class="reveal">${gameCard(g, h)}</div>`).join('')}</div>`
+            : `<div class="note tone-${s.tone}">${d.sparkle({ fill: 'var(--tone)' })}<p>${statusPill('Coming soon', 'soon')} ${s.soon}</p></div>`
+        }
+        <div class="btn-row mt-6">${button(h(`explore/${s.id}/`), `Visit the ${s.name}`, { variant: 'secondary' })}</div>
+      </div>
+    </section>`;
+      })
+      .join('')}`,
+};
+
 // Facts shared by every game, taken from the game READMEs.
 const grownUps = () => `
   <div class="grownups mt-7">
-    <div class="note tone-butter">${d.sun()}<p><strong>Sound on, please.</strong> A friendly voice explains each step and counts along, so children can play before they can read.</p></div>
+    <div class="note tone-butter">${d.sun()}<p><strong>Sound on, please.</strong> A friendly voice explains each step, so children can play before they can read.</p></div>
     <div class="note tone-sage">${d.leaf()}<p><strong>Nothing is ever marked wrong.</strong> A guess that isn’t right gets a gentle “try again” and a helpful hint, never a red cross.</p></div>
-    <div class="note tone-lavender">${d.sparkle({ fill: 'var(--lavender)' })}<p><strong>No downloads or sign-ups.</strong> Every game runs in the browser on phones, tablets and computers.</p></div>
+    <div class="note tone-lavender">${d.sparkle({ fill: 'var(--lavender)' })}<p><strong>No downloads, no sign-up needed.</strong> Every game runs in the browser on phones, tablets and computers. A free family account is optional, for keeping track of progress.</p></div>
   </div>`;
 
 export const studioPages = studios.map((s) => ({
@@ -74,13 +119,19 @@ export const studioPages = studios.map((s) => ({
     const others = studios.filter((o) => o.id !== s.id);
     const studioPrintables = printables.filter((p) => p.studio === s.id);
 
+    const soonList = comingSoonFor(s.id);
+    const soonGames = soonList.length
+      ? `<div class="reveal mt-7">${sectionHead({ eyebrow: 'On the way', title: 'Coming soon', intro: 'These games are designed and being finished now. They’ll open here as soon as they’re ready to play.', doodle: d.sparkle() })}</div>
+         <div class="grid grid-3">${soonList.map((g) => `<div class="reveal">${gameCard(g, h)}</div>`).join('')}</div>`
+      : '';
     const games = open
       ? `<div class="reveal">${sectionHead({ eyebrow: 'Play and learn', title: 'Games to play', doodle: d.star() })}</div>
          
          <div class="grid grid-3" id="games-${s.id}">
            ${list.map((g) => `<div class="reveal">${gameCard(g, h)}</div>`).join('')}
          </div>
-         ${s.id === 'number-nook' ? grownUps() : ''}`
+         ${grownUps()}
+         ${soonGames}`
       : comingSoonPanel({
           title: s.id === 'number-nook' ? 'Our maths games are moving in' : `${s.name} is in the works`,
           message: s.soon,
@@ -90,7 +141,7 @@ export const studioPages = studios.map((s) => ({
               ? button(h('explore/'), 'See all studios', { variant: 'secondary' })
               : button(h('explore/number-nook/'), 'Visit the Number Nook') + button(h('explore/'), 'See all studios', { variant: 'secondary' })
           }</div>`,
-        });
+        }) + soonGames;
 
     return `
     <section class="page-hero tone-${s.tone}" aria-labelledby="page-title">
@@ -145,14 +196,17 @@ export const studioPages = studios.map((s) => ({
 // folder, unchanged, exactly as the game READMEs recommend.
 export const gamePages = games.map((g) => {
   const s = studios.find((x) => x.id === g.studio);
-  const others = gamesFor(g.studio).filter((o) => o.slug !== g.slug).slice(0, 3);
+  let others = gamesFor(g.studio).filter((o) => o.slug !== g.slug).slice(0, 3);
+  const sameStudio = others.length > 0;
+  if (!sameStudio) others = ['echo-cave', 'quick-peek', 'sleepy-owl'].map((slug) => games.find((o) => o.slug === slug)).filter(Boolean);
   const meta = gameMeta(g);
   return {
     path: g.page,
-    title: `${g.title} · ${s.name} maths game`,
+    title: `${g.title} · ${s.name} game`,
     studio: s.id,
-    scripts: accountsEnabled ? ['assets/js/track.js'] : [],
-    description: `${g.description} A free Learning Lanterns maths game in the ${s.name}.`,
+    scripts: ['assets/js/track.js'],
+    chat: false,
+    description: `${g.description} A free Learning Lanterns ${s.subtitle.toLowerCase()} game in the ${s.name}.`,
     body: (h) => `
     <section class="play-hero tone-${s.tone}" aria-labelledby="page-title">
       <div class="container">
@@ -164,7 +218,7 @@ export const gamePages = games.map((g) => {
             <p class="lead">${esc(g.description)}</p>
           </div>
         </div>
-        ${accountsEnabled ? '<div class="player-bar" data-player-bar hidden></div>' : ''}
+        <div class="player-bar" data-player-bar hidden></div>
         <div class="game-frame" data-track-game="${g.slug}" data-studio="${s.id}">
           <iframe src="${h(g.href)}" title="${esc(g.title)} game" allow="autoplay; fullscreen" loading="eager"></iframe>
         </div>
@@ -188,16 +242,16 @@ export const gamePages = games.map((g) => {
           <div class="info-card">
             ${d.leaf()}
             <h3>Playing together</h3>
-            <p>Sit alongside and count out loud together. A guess that isn’t right is never marked wrong: the game offers a gentle hint and lets your child try again.</p>
+            <p>${s.id === 'number-nook' ? 'Sit alongside and count out loud together.' : 'Sit alongside and talk about what you see and hear.'} A guess that isn’t right is never marked wrong: the game offers a gentle hint and lets your child try again.</p>
           </div>
         </div>
       </div>
     </section>
     <section class="section section-alt" aria-labelledby="more-games">
       <div class="container">
-        <div class="reveal">${sectionHead({ eyebrow: s.name, title: '<span id="more-games">More maths games</span>', doodle: d.star() })}</div>
-        <div class="grid grid-3">${others.map((o) => `<div class="reveal">${gameCard(o, h)}</div>`).join('')}</div>
-        <div class="btn-row mt-6">${button(h(`explore/${s.id}/`), `See all ${gamesFor(s.id).length} games`, { variant: 'secondary' })}</div>
+        <div class="reveal">${sectionHead({ eyebrow: s.name, title: `<span id="more-games">${sameStudio ? `More ${s.name} games` : 'More games to try'}</span>`, doodle: d.star() })}</div>
+        ${others.length ? `<div class="grid grid-3">${others.map((o) => `<div class="reveal">${gameCard(o, h)}</div>`).join('')}</div>` : ''}
+        <div class="btn-row mt-6">${button(h(`explore/${s.id}/`), `Visit the ${s.name}`, { variant: 'secondary' })}</div>
       </div>
     </section>`,
   };

@@ -1,6 +1,7 @@
-// Learning Lanterns accounts: the shared Supabase client, the header link,
-// "who's playing" and studio-visit records. Only loaded when accounts are
-// configured in src/config.mjs.
+// Learning Lanterns accounts: the shared client, the header link,
+// "who's playing" and studio-visit records. With Supabase set in
+// src/config.mjs, parents sign up and progress is saved to their account.
+// Without it, progress is kept on this device only (local-client.js).
 (function () {
   'use strict';
 
@@ -9,11 +10,12 @@
   var key = html.getAttribute('data-sb-key');
   var root = html.getAttribute('data-root') || '';
   var fileLinks = html.getAttribute('data-links') === 'file';
-  if (!url || !key || !window.supabase) return;
+  var cloud = Boolean(url && key && window.supabase);
+  if (!cloud && !window.LLLocalClient) return;
 
-  var client = window.supabase.createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-  });
+  var client = cloud
+    ? window.supabase.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+    : window.LLLocalClient;
 
   function link(path) {
     var parts = path.split('#');
@@ -45,8 +47,10 @@
     document.querySelectorAll('[data-account-link]').forEach(function (a) {
       a.href = user ? a.getAttribute('data-href-in') : a.getAttribute('data-href-out');
       var label = a.querySelector('[data-account-label]');
-      if (label) label.textContent = user ? 'My family' : 'Log in';
+      if (label) label.textContent = !cloud ? 'Progress' : user ? 'My family' : 'Log in';
     });
+    // In device mode the "Sign up" link stays, since signing up isn't open yet.
+    document.querySelectorAll('[data-signed-out-only]').forEach(function (a) { a.hidden = Boolean(cloud && user); });
   }
 
   ready.then(function (s) { updateHeader(s.user); });
@@ -84,6 +88,7 @@
 
   window.LL = {
     client: client,
+    cloud: cloud,
     ready: ready,
     link: link,
     activeChild: activeChild,

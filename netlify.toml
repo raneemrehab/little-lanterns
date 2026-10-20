@@ -1,0 +1,9 @@
+# Netlify settings: build the static site and serve the help-chat function.
+# Secrets (the WhatsApp number and keys, the Supabase keys) are set in the
+# Netlify dashboard, never here. See docs/LAUNCH.md.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"

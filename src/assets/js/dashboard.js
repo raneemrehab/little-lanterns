@@ -135,7 +135,7 @@
       };
     }));
     var soon = cat.studios.filter(function (s) { return !s.open; }).length;
-    if (soon) $('[data-chart="studios"]').insertAdjacentHTML('beforeend', '<p class="chart-foot">' + soon + ' more studios are being built. They’ll appear here once they have activities.</p>');
+    if (soon) $('[data-chart="studios"]').insertAdjacentHTML('beforeend', '<p class="chart-foot">' + (soon === 1 ? '1 more studio is' : soon + ' more studios are') + ' being built. They’ll appear here once they have activities.</p>');
     C.table($('[data-table="studios"]'), ['Studio', 'Active time', 'Visits'], rows.map(function (r) { return [r.st.name, timeText(r.secs), String(r.visits)]; }));
   }
 
@@ -179,6 +179,37 @@
         var name = g ? '<a href="' + LL.link(g.page) + '">' + esc(g.title) + '</a>' : esc(slug);
         return '<tr><th scope="row">' + name + '</th><td>' + r.opened + '</td><td>' + esc(timeText(r.secs)) + '</td><td>' + r.started + '</td><td>' + r.done + '</td><td>' + esc(niceDate(r.last)) + '</td></tr>';
       }).join('') + '</tbody></table>';
+  }
+
+  // Which games were played on which days: one row per day, newest first.
+  // The last 7 days always show every day, so quiet days are visible too.
+  function diary(f) {
+    var days = {};
+    f.sessions.forEach(function (s) {
+      var d = startOfDay(s.started_at);
+      var day = days[d] = days[d] || {};
+      var r = day[s.activity_slug] = day[s.activity_slug] || { secs: 0, done: 0, studio: s.studio };
+      r.secs += s.active_seconds; r.done += s.levels_completed;
+    });
+    var keys = Object.keys(days).map(Number);
+    if (state.period === 'week') {
+      var today = startOfDay(Date.now());
+      for (var i = 0; i < 7; i++) if (keys.indexOf(today - i * DAY) === -1) keys.push(today - i * DAY);
+    }
+    keys.sort(function (a, b) { return b - a; });
+    var el = $('[data-diary]');
+    if (!keys.length) { el.innerHTML = '<p class="muted">No games played in this period.</p>'; return; }
+    el.innerHTML = '<ol class="diary">' + keys.slice(0, 60).map(function (d) {
+      var day = days[d] || {};
+      var slugs = Object.keys(day).sort(function (a, b) { return day[b].secs - day[a].secs; });
+      var chips = slugs.length ? slugs.map(function (slug) {
+        var g = gameBySlug[slug], r = day[slug], st = studioById[g ? g.studio : r.studio];
+        var extra = timeText(r.secs) + (r.done ? ', ' + plural(r.done, 'level') + ' finished' : '');
+        return '<li class="diary-game"><span class="diary-dot" style="background:' + (st ? st.color : 'var(--ink-soft)') + '" aria-hidden="true"></span>' +
+          '<span><strong>' + esc(g ? g.title : slug) + '</strong> <span class="muted">' + esc(extra) + (st ? ' · ' + esc(st.name) : '') + '</span></span></li>';
+      }).join('') : '<li class="diary-none muted">No games played</li>';
+      return '<li class="diary-day"><span class="diary-date">' + esc(niceDate(d)) + '</span><ul class="diary-games">' + chips + '</ul></li>';
+    }).join('') + '</ol>';
   }
 
   function timeline(f) {
@@ -230,7 +261,7 @@
     if (t.levels) lines.push('They worked all the way through ' + plural(t.levels, 'level') + '. Lovely persistence!');
     var everPlayed = {}; state.sessions.forEach(function (s) { everPlayed[s.activity_slug] = 1; });
     var unplayed = cat.games.filter(function (g) { return !everPlayed[g.slug]; });
-    if (unplayed.length) lines.push(plural(unplayed.length, 'maths game') + ' still waiting to be discovered.');
+    if (unplayed.length) lines.push(plural(unplayed.length, 'game') + ' still waiting to be discovered.');
     $('[data-insights]').innerHTML = '<h2 class="chart-title">What ' + name + ' has been exploring</h2><ul>' + lines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>';
 
     // Suggestions: real games, matched to the child's level and age where the
@@ -249,7 +280,7 @@
       .map(function (x) {
         var why = x.g.levels && child.learning_level >= x.g.levels[0] && child.learning_level <= x.g.levels[1]
           ? 'Made for ' + LEVELS[child.learning_level] + ' level, where ' + name + ' is now.'
-          : 'A new game to try. It practises ' + esc((x.g.practises[0] || 'maths').toLowerCase()) + '.';
+          : 'A new game to try. It practises ' + esc((x.g.practises[0] || 'something new').toLowerCase()) + '.';
         return { g: x.g, why: why };
       });
     if (top && gameBySlug[top] && picks.length < 3) {
@@ -260,7 +291,7 @@
       return '<li><a class="suggestion" href="' + LL.link(p.g.page) + '">' + (p.g.preview ? '<img src="' + LL.link(p.g.preview) + '" alt="" loading="lazy">' : '') +
         '<span><strong>' + esc(p.g.title) + '</strong><span>' + p.why + '</span></span></a></li>';
     }).join('');
-    if (!html) html = '<li class="muted">' + name + ' has tried every maths game we have. Revisiting favourites at a new level is a great next step.</li>';
+    if (!html) html = '<li class="muted">' + name + ' has tried every game we have. Revisiting favourites at a new level is a great next step.</li>';
     if (focusSoon.length) {
       html += '<li class="muted">' + esc(focusSoon.map(function (id) { return studioById[id].name; }).join(' and ')) + (focusSoon.length > 1 ? ' are' : ' is') + ' coming soon. We’ll suggest activities there as soon as they’re ready.</li>';
     }
@@ -285,6 +316,7 @@
     studioChart(f);
     skills(f);
     gamesTable(f);
+    diary(f);
     timeline(f);
     insightsAndSuggestions(f, t);
   }

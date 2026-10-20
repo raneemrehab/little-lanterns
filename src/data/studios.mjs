@@ -34,7 +34,7 @@ export const studios = [
     doodle: 'numberNook',
     summary: 'Cosy, hands-on number play that builds confidence with counting and early maths.',
     intro:
-      'Number Nook is a cosy corner for early maths. It is home to our first interactive maths games, designed to make number practice feel like play.',
+      'Number Nook is a cosy corner for early maths. It is home to our interactive maths games, designed to make number practice feel like play.',
     focus: [
       'Number recognition',
       'Counting',

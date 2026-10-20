@@ -37,8 +37,9 @@ export function gameCard(g, h, { headingLevel = 3 } = {}) {
   const meta = gameMeta(g);
   const target = g.page || g.href;
   return `
-  <article class="game-card tone-${studio?.tone || 'butter'}">
+  <article class="game-card tone-${studio?.tone || 'butter'}${g.soon ? ' is-soon' : ''}">
     <div class="game-card-preview">
+      ${g.soon ? `<span class="soon-ribbon">Coming soon</span>` : ''}
       ${g.preview ? `<img src="${h(g.preview)}" alt="The ${esc(g.title)} start screen" loading="lazy" width="960" height="600">` : studioArt[studio?.doodle || 'numberNook']()}
     </div>
     <div class="game-card-body">
@@ -50,7 +51,11 @@ export function gameCard(g, h, { headingLevel = 3 } = {}) {
           ? `<div class="practises"><span class="practises-label">Practises</span><ul>${g.practises.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>`
           : ''
       }
-      <a class="btn btn-primary btn-sm" href="${h(target)}">Play game<span class="visually-hidden">: ${esc(g.title)}</span> <span aria-hidden="true">▸</span></a>
+      ${
+        g.soon
+          ? statusPill('Coming soon', 'soon')
+          : `<a class="btn btn-primary btn-sm" href="${h(target)}">Play game<span class="visually-hidden">: ${esc(g.title)}</span> <span aria-hidden="true">▸</span></a>`
+      }
     </div>
   </article>`;
 }

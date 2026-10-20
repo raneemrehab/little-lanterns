@@ -131,7 +131,8 @@
     var settings = document.querySelector('[data-settings-form]');
     if (settings) {
       settings.name.value = (user.user_metadata && user.user_metadata.full_name) || '';
-      document.querySelector('[data-email]').textContent = user.email;
+      var email = document.querySelector('[data-email]');
+      if (email) email.textContent = user.email;
       settings.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!settings.name.value.trim()) { setStatus(settings, 'Please fill in your name.'); return; }
@@ -140,7 +141,8 @@
           setStatus(settings, r.error ? LL.friendlyError(r.error) : 'Saved.');
         });
       });
-      document.querySelector('[data-sign-out]').addEventListener('click', function () {
+      var signOut = document.querySelector('[data-sign-out]');
+      if (signOut) signOut.addEventListener('click', function () {
         client.auth.signOut().then(function () { window.location.href = LL.link(''); });
       });
       var del = document.querySelector('[data-delete-form]');
@@ -151,7 +153,7 @@
         client.rpc('delete_my_account').then(function (r) {
           if (r.error) { setStatus(del, LL.friendlyError(r.error)); return; }
           try { Object.keys(localStorage).forEach(function (k) { if (/^ll-/.test(k)) localStorage.removeItem(k); }); } catch (x) { /* storage blocked */ }
-          client.auth.signOut().then(function () { window.location.href = LL.link('') + '?account=deleted'; });
+          client.auth.signOut().then(function () { window.location.href = LL.cloud ? LL.link('') + '?account=deleted' : LL.link('account/'); });
         });
       });
     }

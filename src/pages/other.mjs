@@ -93,7 +93,7 @@ export const printablesPage = {
     <section class="section-tight"><div class="container">
       <div class="note tone-butter">${d.sparkle()}<p>Looking for something to try right now? ${
         games.length
-          ? `Our maths games are ready to play in the <a href="${h('explore/number-nook/')}">Number Nook</a>.`
+          ? `Maths games are ready in the <a href="${h('explore/number-nook/')}">Number Nook</a>, and literacy games in the <a href="${h('explore/word-garden/')}">Word Garden</a>.`
           : `Take a look around the <a href="${h('explore/')}">learning studios</a> to see what’s taking shape.`
       }</p></div>
     </div></section>`;
@@ -187,7 +187,7 @@ export const schoolsPage = {
           intro: 'Each format is designed to work on its own or alongside the others, so children can meet the same idea on screen, on paper and in their hands.',
         })}</div>
         <div class="grid grid-2 reveal">
-          <div class="info-card">${d.star()}<h3>Interactive games</h3><p>Browser-based games that turn practice into play, with no app to install.</p>${statusPill(games.length ? 'Maths games available' : 'First maths games on the way', games.length ? 'open' : 'soon')}</div>
+          <div class="info-card">${d.star()}<h3>Interactive games</h3><p>Browser-based games that turn practice into play, with no app to install.</p>${statusPill(games.length ? `${games.length} games to play` : 'First games on the way', games.length ? 'open' : 'soon')}</div>
           <div class="info-card">${d.pencil()}<h3>Printable resources</h3><p>Activity sheets designed for the classroom, small groups or home learning.</p>${statusPill(printables.length ? 'Available' : 'In development', printables.length ? 'open' : 'soon')}</div>
           <div class="info-card">${d.toolbox()}<h3>Hands-on materials</h3><p>Tactile learning tools that bring ideas off the screen and into little hands.</p>${statusPill('In development', 'soon')}</div>
           <div class="info-card">${d.leaf()}<h3>Organised by learning area</h3><p>Everything is grouped into six learning studios, from literacy and maths to life skills and creative arts.</p></div>
@@ -265,7 +265,7 @@ export const aboutPage = {
         </ul>
 
         <h2>Where we are today</h2>
-        <p>Learning Lanterns is a young brand. Our first maths games ${games.length ? 'are ready to play' : 'are being added'} in the <a href="${h('explore/number-nook/')}">Number Nook</a>, and our printables, hands-on toys and five more learning studios are being designed now.</p>
+        <p>Learning Lanterns is a young brand. Our first games are ready to play in the <a href="${h('explore/number-nook/')}">Number Nook</a>, <a href="${h('explore/word-garden/')}">Word Garden</a>, <a href="${h('explore/brain-sparks/')}">Brain Sparks</a> and more, and our printables, hands-on toys and more games are being designed now.</p>
 
         <h2>The people behind Learning Lanterns</h2>
         ${placeholder('Founder story', 'Who started Learning Lanterns, and why? A few warm sentences in your own words will go here.')}
@@ -298,6 +298,52 @@ export const contactPage = {
           <p class="lead">Schools and nurseries can also use our <a href="${h('for-schools/#enquire')}">partnership enquiry</a>.</p>
         </div>
         <div class="form-card">${contactForm(h)}</div>
+      </div>
+    </section>`,
+};
+
+// ---- Help centre -----------------------------------------------------------------------
+
+const faqs = (h) => [
+  ['Do we need to sign up to play?', `<p>No. Every game is free to play straight away, with no account and nothing to download. Just pick a game in any <a href="${h('explore/')}">learning studio</a> and press play.</p>`],
+  ['How can I see what my child has been playing?', `<p>Open <a href="${h('account/')}">Progress</a> and add your child with a nickname. Then, at the top of any game page, choose who’s playing. The progress page shows a chart of time spent each day, a play diary of which games were played on which days, the skills practised and the levels finished.</p>`],
+  [
+    'Is progress saved on all our devices?',
+    accountsEnabled
+      ? `<p>Yes, when you’re logged in to your free family account. Progress is saved to your account, so you can check it on any phone, tablet or computer.</p>`
+      : `<p>For now, progress is saved in the browser on the device your child plays on, and it isn’t sent to us. Free family accounts, which let you see progress on any device, are opening soon.</p>`,
+  ],
+  ['Which devices can we use?', '<p>Phones, tablets and computers, in any up-to-date web browser such as Safari, Chrome or Edge. Tablets give little fingers the most room.</p>'],
+  ['There’s no sound. What can I do?', '<p>Check the volume, and on an iPhone or iPad make sure the silent switch is off. Some browsers only play sound after the first tap, so tap “Hear how to play” or start a level. The speaker button in each game repeats the instructions.</p>'],
+  ['What does “Coming soon” mean?', '<p>Those games are designed and being finished now, most of them while their voice recordings are made. They’ll open on their studio page as soon as they’re ready to play.</p>'],
+  ['What ages are the games for?', '<p>Our games are for children from about 2 to 9. Each game card shows its ages, and most games have levels from Little Sparks to Bright so children can grow with them.</p>'],
+  ['Is it safe for my child?', `<p>Children never type in personal details, there are no adverts, and nothing is ever marked wrong. You can read more in our <a href="${h('privacy/')}">Privacy Policy</a>.</p>`],
+  ['Can schools and nurseries use Learning Lanterns?', `<p>Yes. Have a look at <a href="${h('for-schools/')}">For Schools</a>, and send us an enquiry there.</p>`],
+];
+
+export const helpPage = {
+  path: 'help/',
+  title: 'Help centre',
+  description: 'Answers to common questions about Learning Lanterns games, progress tracking and accounts, and a quick way to ask us anything.',
+  body: (h) => `
+    ${pageHero(h, {
+      tone: 'sage',
+      crumbs: [['Home', ''], ['Help centre', 'help/']],
+      eyebrow: 'Help centre',
+      title: 'How can we help?',
+      lead: 'Quick answers to the questions families ask most. Can’t find what you need? Send us a message and our team will get back to you.',
+      art: `<div class="hero-icon">${d.lantern({ face: true })}</div>`,
+      extra: site.messageEndpoint ? `<div class="btn-row"><button class="btn btn-primary" type="button" data-open-chat>Ask us a question</button></div>` : '',
+    })}
+    <section class="section" aria-labelledby="faq-title">
+      <div class="container">
+        ${sectionHead({ eyebrow: 'Common questions', title: '<span id="faq-title">Frequently asked questions</span>', doodle: d.sparkle() })}
+        <div class="faq">${faqs(h).map(([q, a]) => `<details><summary>${q}</summary>${a}</details>`).join('')}</div>
+        <div class="note mt-7 tone-butter">${d.sun()}<p><strong>Still have a question?</strong> ${
+          site.messageEndpoint
+            ? `<a href="${h('contact/')}" data-open-chat>Chat with us</a> using the Questions button in the corner of any page, or <a href="${h('contact/')}">send us a message</a>.`
+            : `<a href="${h('contact/')}">Get in touch</a> and we’ll help.`
+        }</p></div>
       </div>
     </section>`,
 };
@@ -336,9 +382,14 @@ export const privacyPage = {
         <li>You can delete your whole account from the Account page. This permanently deletes you, your children’s profiles and all of their activity.</li>
       </ul>
       <p>The site also saves a few small preferences in your browser, such as which child is playing on this device. They stay on your device.</p>`
-          : site.formEndpoint
-            ? `<p>When you send us a message or register your interest, we receive the details you type into the form so we can reply. We don’t sell your details or use them for advertising.</p>`
-            : `<p>This website does not currently ask for or store any personal information. There are no accounts and no sign-up forms.</p>`
+          : `<h3>Progress on this device</h3>
+      <p>If you add a child on the Progress page, their nickname, age group and learning level, and which games they play, when and for how long, are saved in this browser only. They aren’t sent to us. You can clear them at any time from the Progress page.</p>`
+      }
+      ${
+        site.formEndpoint || site.messageEndpoint
+          ? `<h3>Messages</h3>
+      <p>When you send us a message in the chat box or a form, we receive what you type, including any name, email address or phone number you add, so we can reply. Messages are passed to our team through WhatsApp. We don’t sell your details or use them for advertising.</p>`
+          : ''
       }
       <p>Our games are designed for children and do not ask children for personal information.</p>
       <p>The site loads its fonts from Google Fonts, which means your browser connects to Google’s servers to download them.</p>

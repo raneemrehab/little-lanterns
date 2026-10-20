@@ -7,7 +7,8 @@
 //   - taps, clicks and key presses            -> the child is actively playing
 // Time only counts while the page is visible, a level is on screen, and the
 // child has interacted within the last minute. Nothing is recorded unless a
-// signed-in parent has chosen which child is playing.
+// parent has chosen which child is playing. With accounts switched on it is
+// saved to the parent's account; otherwise it stays on this device.
 (function () {
   'use strict';
   if (!window.LL) return;
@@ -22,7 +23,7 @@
   var slug = frameBox.getAttribute('data-track-game');
   var studio = frameBox.getAttribute('data-studio');
   var html = document.documentElement;
-  var restUrl = html.getAttribute('data-sb-url').replace(/\/$/, '') + '/rest/v1';
+  var restUrl = LL.cloud ? html.getAttribute('data-sb-url').replace(/\/$/, '') + '/rest/v1' : null;
   var apiKey = html.getAttribute('data-sb-key');
 
   var IDLE_MS = 60 * 1000;
@@ -64,6 +65,10 @@
     };
     if (ending) body.ended_at = new Date().toISOString();
     dirty = false;
+    if (!LL.cloud) {
+      client.from('activity_sessions').update(body).eq('id', session.id).then(function (r) { if (r.error) dirty = true; });
+      return;
+    }
     try {
       fetch(restUrl + '/activity_sessions?id=eq.' + session.id, {
         method: 'PATCH',
@@ -204,7 +209,9 @@
       return;
     }
     if (!children.length) {
-      bar.innerHTML = '<p>Add a child to your family account to save their progress. <a href="' + LL.link('account/children/') + '#add">Add a child</a></p>';
+      bar.innerHTML = LL.cloud
+        ? '<p>Add a child to your family account to save their progress. <a href="' + LL.link('account/children/') + '#add">Add a child</a></p>'
+        : '<p>No sign-up needed to play. Want to see what your child plays each day? <a href="' + LL.link('account/children/') + '#add">Add your child</a> to track progress on this device.</p>';
       return;
     }
     var saved = LL.activeChild(user.id);

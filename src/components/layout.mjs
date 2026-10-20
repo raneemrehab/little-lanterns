@@ -49,6 +49,7 @@ export const statusPill = (text, kind = 'soon') =>
 const navItems = [
   { label: 'Home', path: '' },
   { label: 'Explore', path: 'explore/', menu: true },
+  { label: 'Games', path: 'play/' },
   { label: 'Printables', path: 'printables/' },
   { label: 'Hands-On Toys', path: 'hands-on-toys/' },
   { label: 'For Schools', path: 'for-schools/' },
@@ -59,6 +60,11 @@ function isCurrent(ctx, path) {
   if (path === '') return ctx.path === '';
   return ctx.path.startsWith(path);
 }
+
+// With accounts switched on, the header offers "Log in". Without them,
+// progress is kept on the device, so it links straight to the dashboard.
+const accountOut = accountsEnabled ? 'account/log-in/' : 'account/';
+const accountLabel = accountsEnabled ? 'Log in' : 'Progress';
 
 function header(ctx, h) {
   const links = navItems
@@ -98,26 +104,19 @@ function header(ctx, h) {
         <span class="brand-word">Learning <em>Lanterns</em></span>
       </a>
       <nav class="primary-nav" id="primary-nav" aria-label="Main">
-        <ul class="nav-list">${links}${
-          accountsEnabled
-            ? `<li class="nav-account"><a class="nav-link" href="${h('account/log-in/')}" data-account-link data-href-in="${h('account/')}" data-href-out="${h('account/log-in/')}"><span data-account-label>Log in</span></a></li>`
-            : ''
-        }</ul>
+        <ul class="nav-list">${links}<li class="nav-account"><a class="nav-link" href="${h(accountOut)}" data-account-link data-href-in="${h('account/')}" data-href-out="${h(accountOut)}"><span data-account-label>${accountLabel}</span></a></li><li class="nav-account"><a class="nav-link" href="${h('account/sign-up/')}" data-signed-out-only>Sign up free</a></li></ul>
       </nav>
       <div class="header-actions">
-        ${
-          accountsEnabled
-            ? `<a class="account-link" href="${h('account/log-in/')}" data-account-link data-href-in="${h('account/')}" data-href-out="${h('account/log-in/')}">
+        <a class="account-link" href="${h(accountOut)}" data-account-link data-href-in="${h('account/')}" data-href-out="${h(accountOut)}">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 20c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <span class="account-label" data-account-label>Log in</span>
-        </a>`
-            : ''
-        }
+          <span class="account-label" data-account-label>${accountLabel}</span>
+        </a>
+
         <button class="icon-btn search-open" type="button" aria-haspopup="dialog" aria-controls="search-dialog">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <span class="visually-hidden">Search the site</span>
         </button>
-        ${button(h('explore/'), 'Explore Learning', { cls: 'header-cta btn-sm' })}
+        <a class="btn btn-primary btn-sm header-signup" href="${h('account/sign-up/')}" data-signed-out-only>Sign up free</a>
         <button class="icon-btn nav-burger" type="button" aria-expanded="false" aria-controls="primary-nav">
           <span class="burger" aria-hidden="true"><span></span><span></span><span></span></span>
           <span class="visually-hidden">Menu</span>
@@ -165,10 +164,12 @@ function footer(h) {
       <nav aria-label="Learning Lanterns">
         <h2 class="footer-heading">Learning Lanterns</h2>
         <ul>
+          <li><a href="${h('play/')}">All games</a></li>
           <li><a href="${h('printables/')}">Printables</a></li>
           <li><a href="${h('hands-on-toys/')}">Hands-On Toys</a></li>
           <li><a href="${h('for-schools/')}">For Schools</a></li>
           <li><a href="${h('about/')}">About</a></li>
+          <li><a href="${h('help/')}">Help centre</a></li>
           <li><a href="${h('contact/')}">Contact</a></li>
         </ul>
       </nav>
@@ -187,9 +188,47 @@ function footer(h) {
   </footer>`;
 }
 
+// ---- Help chat -------------------------------------------------------------------
+//
+// A small "Questions?" box on every page except the game play pages, where it
+// could cover a child's buttons. Messages go to site.messageEndpoint, which
+// forwards them to WhatsApp without the number ever reaching the browser.
+
+function helpChat(h) {
+  if (!site.messageEndpoint) return '';
+  return `
+  <div class="help-chat" data-help-chat data-endpoint="${esc(site.messageEndpoint)}">
+    <button class="help-chat-toggle" type="button" aria-expanded="false" aria-controls="help-chat-panel">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5h-1A1.5 1.5 0 0 1 3 16V7a1.5 1.5 0 0 1 1.5-1.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="8.5" cy="11.5" r="1.1" fill="currentColor"/><circle cx="12" cy="11.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="11.5" r="1.1" fill="currentColor"/></svg>
+      <span class="help-chat-label">Questions?</span>
+    </button>
+    <section class="help-chat-panel" id="help-chat-panel" aria-labelledby="help-chat-title" hidden>
+      <div class="help-chat-head">
+        ${lantern({ cls: 'help-chat-mark' })}
+        <div><h2 id="help-chat-title">Ask us anything</h2><p>We usually reply within a day.</p></div>
+        <button class="help-chat-close" type="button" aria-label="Close the chat">×</button>
+      </div>
+      <div class="help-chat-log" aria-live="polite">
+        <p class="bubble bubble-us">Hello! Send us your question and it goes straight to our team. You might also find the answer in our <a href="${h('help/')}">Help centre</a>.</p>
+      </div>
+      <form class="help-chat-form" novalidate>
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></div>
+        <label class="visually-hidden" for="hc-message">Your question</label>
+        <textarea id="hc-message" name="message" rows="3" maxlength="2000" required placeholder="Type your question…"></textarea>
+        <div class="help-chat-row">
+          <div><label for="hc-name">Your name <span class="muted">(optional)</span></label><input id="hc-name" name="name" type="text" autocomplete="name" maxlength="80"></div>
+          <div><label for="hc-contact">Email or phone, so we can reply</label><input id="hc-contact" name="contact" type="text" autocomplete="email" maxlength="120"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit">Send</button>
+        <p class="help-chat-privacy">Only used to answer you. <a href="${h('privacy/')}">Privacy</a></p>
+      </form>
+    </section>
+  </div>`;
+}
+
 // ---- Document ----------------------------------------------------------------
 
-export function page(ctx, { title, description = site.description, body, bodyClass = '', scripts = [], studio = null }) {
+export function page(ctx, { title, description = site.description, body, bodyClass = '', scripts = [], studio = null, chat = true }) {
   const h = makeHref(ctx);
   const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.tagline}`;
   const canonical = site.url && !ctx.absolute ? `${site.url.replace(/\/$/, '')}/${ctx.path}` : null;
@@ -214,7 +253,10 @@ export function page(ctx, { title, description = site.description, body, bodyCla
   <link rel="stylesheet" href="${h('assets/css/styles.css')}">
   <script defer src="${h('assets/js/search-index.js')}"></script>
   <script defer src="${h('assets/js/main.js')}"></script>
-  ${accountsEnabled ? `<script defer src="${h('assets/vendor/supabase.js')}"></script>\n  <script defer src="${h('assets/js/catalog.js')}"></script>\n  <script defer src="${h('assets/js/accounts.js')}"></script>` : ''}
+  ${chat && site.messageEndpoint ? `<script defer src="${h('assets/js/help-chat.js')}"></script>` : ''}
+  ${accountsEnabled ? `<script defer src="${h('assets/vendor/supabase.js')}"></script>` : `<script defer src="${h('assets/js/local-client.js')}"></script>`}
+  <script defer src="${h('assets/js/catalog.js')}"></script>
+  <script defer src="${h('assets/js/accounts.js')}"></script>
   ${scripts.map((src) => `<script defer src="${h(src)}"></script>`).join('\n  ')}
 </head>
 <body class="${bodyClass}" data-path="${ctx.absolute ? '' : ctx.path}"${studio ? ` data-studio="${studio}"` : ''}>
@@ -224,6 +266,7 @@ ${body(h)}
   </main>
   ${footer(h)}
   ${searchDialog()}
+  ${chat ? helpChat(h) : ''}
 </body>
 </html>
 `;
