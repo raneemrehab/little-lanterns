@@ -339,6 +339,15 @@ export const helpPage = {
       <div class="container">
         ${sectionHead({ eyebrow: 'Common questions', title: '<span id="faq-title">Frequently asked questions</span>', doodle: d.sparkle() })}
         <div class="faq">${faqs(h).map(([q, a]) => `<details><summary>${q}</summary>${a}</details>`).join('')}</div>
+        ${
+          // Never shown. Netlify reads it at deploy time to set up the backup
+          // inbox the chat box and forms fall back to (see LLInbox in main.js).
+          site.messageEndpoint
+            ? `<form name="messages" data-netlify="true" data-netlify-honeypot="_gotcha" hidden aria-hidden="true">
+          <input name="_gotcha"><input name="name"><input name="email"><input name="contact"><input name="organisation"><input name="role"><input name="topic"><input name="page"><textarea name="message"></textarea>
+        </form>`
+            : ''
+        }
         <div class="note mt-7 tone-butter">${d.sun()}<p><strong>Still have a question?</strong> ${
           site.messageEndpoint
             ? `<a href="${h('contact/')}" data-open-chat>Chat with us</a> using the Questions button in the corner of any page, or <a href="${h('contact/')}">send us a message</a>.`

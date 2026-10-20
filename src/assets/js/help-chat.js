@@ -44,22 +44,17 @@
       message: message, name: form.name.value.trim(), contact: form.contact.value.trim(),
       topic: 'Help centre chat', page: document.title, _gotcha: form._gotcha.value,
     };
+    var backup = function () { return window.LLInbox ? window.LLInbox(data) : false; };
     fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) })
-      .then(function (res) {
-        if (res.ok) {
-          form.message.value = '';
-          bubble(data.contact
-            ? 'Thank you! Your message is with our team, and we’ll reply to ' + data.contact + ' soon.'
-            : 'Thank you! Your message is with our team. If you’d like a reply, add your email or phone number and send another message.', 'us');
-          return;
-        }
-        return res.json().catch(function () { return {}; }).then(function (r) {
-          bubble(r && r.error === 'not-configured'
-            ? 'Sorry, our chat isn’t switched on just yet. Please try again soon.'
-            : 'Sorry, that didn’t send. Please try again in a moment.', 'us');
-        });
+      // WhatsApp couldn't take it: keep the message in the backup inbox instead.
+      .then(function (res) { return res.ok || backup(); }, backup)
+      .then(function (sent) {
+        if (!sent) { bubble('Sorry, that didn’t send. Please check your connection and try again.', 'us'); return; }
+        form.message.value = '';
+        bubble(data.contact
+          ? 'Thank you! Your message is with our team, and we’ll reply to ' + data.contact + ' soon.'
+          : 'Thank you! Your message is with our team. If you’d like a reply, add your email or phone number and send another message.', 'us');
       })
-      .catch(function () { bubble('Sorry, that didn’t send. Please check your connection and try again.', 'us'); })
       .then(function () { btn.disabled = false; });
   });
 })();
