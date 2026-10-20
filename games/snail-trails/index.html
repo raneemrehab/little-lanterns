@@ -571,7 +571,8 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     // Plays a clip and resolves with how long it lasts (0 when the clip isn't recorded).
     async function play(key, fallback) {
       if (!VOICE[key]) return 0;
-      await unlock(); stop();
+      // Phones can be slow to unpack the voice clips (or never finish, with sound blocked); don't let the game wait on them.
+      await Promise.race([unlock(), sleep(1500)]); stop();
       if (ctx && buffers[key]) {
         const src = ctx.createBufferSource(); src.buffer = buffers[key]; src.connect(ctx.destination); src.start();
         src.onended = () => { if (current === src) current = null; }; current = src;
@@ -621,10 +622,19 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     return { x: (r.left - s.left) * k, y: (r.top - s.top) * k, w: r.width * k, h: r.height * k };
   }
   // A pointer position in the stone's own 200×260 drawing space.
+  // Worked out from the box on screen rather than getScreenCTM, which some phone browsers
+  // get wrong when the stage is scaled with a CSS transform.
   function padPoint(e) {
-    const m = pad.getScreenCTM(); if (!m) return { x: 0, y: 0 };
-    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
-    return { x: p.x, y: p.y };
+    const r = pad.getBoundingClientRect(), vb = pad.viewBox.baseVal;
+    if (!r.width || !r.height || !vb || !vb.width) return { x: 0, y: 0 };
+    const k = Math.min(r.width / vb.width, r.height / vb.height);
+    const ox = r.left + (r.width - vb.width * k) / 2, oy = r.top + (r.height - vb.height * k) / 2;
+    return { x: vb.x + (e.clientX - ox) / k, y: vb.y + (e.clientY - oy) / k };
+  }
+  // How many stone units one screen pixel covers right now.
+  function padUnit() {
+    const r = pad.getBoundingClientRect(), vb = pad.viewBox.baseVal;
+    return r.width && vb && vb.width ? 1 / Math.min(r.width / vb.width, r.height / vb.height) : 1;
   }
 
   /* ================= Game state ================= */
@@ -674,6 +684,7 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
 
   /* ================= Trace: follow the dots ================= */
   const TRACE_TOL = 30;        // how far (in stone units) the finger may stray from the dots
+  let tol = TRACE_TOL;         // TRACE_TOL, made roomier for a finger on a small screen
   const shapes = {};
   const shapeOf = (n) => shapes[n] || (shapes[n] = strokesOf(n, 4));
   // Sizes the stone for one digit or two side by side.
@@ -712,7 +723,7 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   function traceDown(p) {
     const t = S.tr, pts = shapeOf(S.n)[t.k];
     if (!pts) return;
-    if (dist(p, pts[t.idx]) <= TRACE_TOL + 6) { t.on = true; drawTrace(); return; }
+    if (dist(p, pts[t.idx]) <= tol + 6) { t.on = true; drawTrace(); return; }
     // Started somewhere else.
     hint(t.idx === 0 ? 'startDot' : 'keepGoing');
   }
@@ -720,11 +731,11 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     const t = S.tr; if (!t.on) return;
     const strokes = shapeOf(S.n), pts = strokes[t.k];
     let best = -1, bd = Infinity;
-    for (let j = t.idx + 1; j <= Math.min(t.idx + 10, pts.length - 1); j++) { const d = dist(p, pts[j]); if (d < TRACE_TOL && d <= bd + 4) { bd = d; best = j; } }
+    for (let j = t.idx + 1; j <= Math.min(t.idx + 10, pts.length - 1); j++) { const d = dist(p, pts[j]); if (d < tol && d <= bd + 4) { bd = d; best = j; } }
     if (best > t.idx) {
       if (Math.floor(best / 8) > Math.floor(t.idx / 8)) Sound.tick(Math.floor(best / 8));
       t.idx = best;
-    } else if (dist(p, pts[t.idx]) > TRACE_TOL * 2.2) { t.on = false; drawTrace(); miss(); return; }
+    } else if (dist(p, pts[t.idx]) > tol * 2.2) { t.on = false; drawTrace(); miss(); return; }
     if (t.idx >= pts.length - 2) {
       t.done.push(t.k); t.k++; t.idx = 0; t.on = false;
       drawTrace();
@@ -823,23 +834,42 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   }
 
   /* ----- Pointer input on the stone ----- */
+  // One finger at a time: a second finger or a resting palm is ignored while a line is being drawn.
+  let finger = null;
   pad.addEventListener('pointerdown', (e) => {
     Sound.unlock(); S.lastTouch = Date.now();
     if (S.busy || S.phase !== 'ask') return;
+    if (finger !== null && finger !== e.pointerId) return;
     e.preventDefault();
+    finger = e.pointerId;
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
+    tol = Math.min(48, Math.max(TRACE_TOL, (e.pointerType === 'mouse' ? 18 : 30) * padUnit()));
     const p = padPoint(e);
     if (S.sub === 'trace') traceDown(p); else freeDown(p);
   });
   pad.addEventListener('pointermove', (e) => {
-    if (S.busy || S.phase !== 'ask') return;
+    if (e.pointerId !== finger || S.busy || S.phase !== 'ask') return;
     S.lastTouch = Date.now();
-    const p = padPoint(e);
-    if (S.sub === 'trace') traceMove(p); else freeMove(p);
+    // A quick finger can jump a long way between frames; the in-between points keep the trail joined up.
+    const all = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    for (const ev of all.length ? all : [e]) {
+      if (S.busy || S.phase !== 'ask') break;
+      const p = padPoint(ev);
+      if (S.sub === 'trace') { if (!S.tr || !S.tr.on) break; traceMove(p); } else freeMove(p);
+    }
   });
-  const up = () => { if (S.phase !== 'ask') return; if (S.sub === 'trace') traceUp(); else freeUp(); };
-  pad.addEventListener('pointerup', up);
-  pad.addEventListener('pointercancel', up);
+  const up = (e) => {
+    if (e.pointerId !== finger) return;
+    finger = null;
+    if (S.phase !== 'ask') return;
+    // The browser took the touch away (a scroll or a system gesture): stop the line without calling it a slip.
+    if (e.type !== 'pointerup' && S.sub === 'trace') { if (S.tr && S.tr.on) { S.tr.on = false; drawTrace(); } return; }
+    if (S.sub === 'trace') traceUp(); else freeUp();
+  };
+  pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+  pad.addEventListener('lostpointercapture', (e) => { if (e.pointerId === finger) up(e); });
+  // Older iPhones and some Android browsers still scroll the page under a finger unless touches are stopped here.
+  ['touchstart', 'touchmove'].forEach((t) => pad.addEventListener(t, (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false }));
 
   /* ================= Spot the backwards one ================= */
   const pebbleBox = $('#pebbles');
@@ -902,10 +932,10 @@ const VOICE = {"0": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   async function ask(tok) {
     showQuestion();
     S.phase = 'ask'; S.lastSpoken = Date.now();
-    S.busy = true;
-    await askVoice();
-    if (!alive(tok)) return;
+    // The stone listens straight away: a child who starts before Sunny finishes talking still gets a trail.
     S.busy = false; S.lastTouch = Date.now();
+    await askVoice();
+    if (alive(tok) && S.phase === 'ask') S.lastTouch = Date.now();
   }
 
   /* ================= Right answer ================= */
