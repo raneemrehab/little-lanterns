@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Magnetic Rote Counting Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Nunito+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: catalogue spread. Hero product shot, then two detail plates, then learning notes and palette. */
+:root {
+  --bg: #f4ede3;
+  --paper: #fbf7f1;
+  --ink: #3b2f26;
+  --muted: #7a6a5c;
+  --line: #e2d6c6;
+  --accent: #b86a4f;
+  --display: "Fraunces", Georgia, serif;
+  --body: "Nunito Sans", system-ui, sans-serif;
+  --num: "Fredoka", "Nunito Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #211b17; --paper: #2b241f; --ink: #f1e7da; --muted: #b9a998; --line: #3d342d; --accent: #e09a7f; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #211b17; --paper: #2b241f; --ink: #f1e7da; --muted: #b9a998; --line: #3d342d; --accent: #e09a7f; color-scheme: dark; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 5vw, 48px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 62ch; margin: 0; }
+figure { margin: 0; display: grid; gap: 10px; }
+.plate { border-radius: 18px; overflow: hidden; background: #efe5d8; box-shadow: 0 1px 0 var(--line); }
+.plate svg { display: block; width: 100%; height: auto; }
+figcaption { font-size: 14px; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 600; }
+.details { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px) { .details { grid-template-columns: 1fr; } }
+.scale-fig { max-width: 760px; }
+.notes { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 760px) { .notes { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 12px; }
+ul.learn { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+@media (max-width: 480px) { ul.learn { grid-template-columns: 1fr; } }
+ul.learn li { display: grid; gap: 2px; min-width: 0; }
+ul.learn b { font-weight: 600; }
+ul.learn span { color: var(--muted); font-size: 14px; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+.sw { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.sw i { display: block; height: 44px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+.sw b { color: var(--ink); font-weight: 600; display: block; }
+.spec { margin-top: 18px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Little Lanterns · Product concept</div>
+    <h1>Magnetic Rote Counting Board</h1>
+    <p class="sub">A solid wood ten-frame with ten chunky numeral pieces. Each piece hides a magnet underneath and clicks into its matching recess, so children count, match and place 1 to 10 with their hands.</p>
+  </header>
+
+  <figure>
+    <div class="plate" id="hero"></div>
+    <figcaption><b>Hero view.</b> Every numeral has raised tracing dots that follow its writing path, starting at the big dot. Seven numerals are seated, with 4, 8 and 10 waiting beside the board. Each square has a numeral-shaped well cut into it, so a piece only drops in where it matches.</figcaption>
+  </figure>
+
+  <div class="details">
+    <figure>
+      <div class="plate" id="closeup"></div>
+      <figcaption><b>Detail.</b> A child lifts the 4 out of its numeral-shaped well while the 3 sits snug and magnetically held in its own.</figcaption>
+    </figure>
+    <figure>
+      <div class="plate" id="section"></div>
+      <figcaption><b>How the snap works.</b> A sealed magnet in each piece meets a hidden steel disc under each recess. No batteries or electronics.</figcaption>
+    </figure>
+  </div>
+
+  <figure class="scale-fig">
+    <div class="plate" id="scale"></div>
+    <figcaption><b>Size in a child's hand.</b> Drawn to the same scale: an average 3 to 4 year old's hand is about 11 to 12 cm from wrist to fingertip and about 6 cm across the palm. The 8 cm numeral is longer than the palm, so children grip it with their whole hand.</figcaption>
+  </figure>
+
+  <section class="notes">
+    <div>
+      <h2>What it teaches</h2>
+      <ul class="learn">
+        <li><b>Rote counting 1 to 10</b><span>Placing the pieces in order builds the counting sequence.</span></li>
+        <li><b>Number recognition</b><span>Each numeral is matched to its engraved twin.</span></li>
+        <li><b>Number formation</b><span>Raised dots follow the writing path. Children start at the big dot and trace along with a finger.</span></li>
+        <li><b>Matching and visual discrimination</b><span>Telling 6 from 9 and 1 from 7 by shape.</span></li>
+        <li><b>Problem solving</b><span>Only the right numeral seats flat in each recess.</span></li>
+        <li><b>Fine motor skills</b><span>Lifting, gripping, turning and placing each piece.</span></li>
+        <li><b>Hand-eye coordination</b><span>Lining a piece up with its recess before it drops in.</span></li>
+        <li><b>Tactile feedback</b><span>Bumpy tracing dots and a magnetic click tell the hands what the eyes see.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h2>Finish palette</h2>
+      <div class="swatches">
+        <div class="sw"><i style="background:#f1d98b"></i><b>Butter yellow</b>1 and 6</div>
+        <div class="sw"><i style="background:#e9b7a0"></i><b>Dusty peach</b>2 and 7</div>
+        <div class="sw"><i style="background:#a9b9a0"></i><b>Muted sage</b>3 and 8</div>
+        <div class="sw"><i style="background:#afc6d6"></i><b>Powder blue</b>4 and 9</div>
+        <div class="sw"><i style="background:#c9785c"></i><b>Terracotta</b>5 and 10</div>
+      </div>
+      <p class="spec">Suggested build: each square has a numeral-shaped well about 8 mm deep so the board also works as an inset puzzle. Solid beech board about 55 × 25 cm with 10 cm squares. Each numeral is about 8 cm tall and 2 cm thick, far too big to fit a small-parts test cylinder (3.2 cm wide), with 3 mm rounded edges with a water-based stain so the grain shows through.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const PIECE = {
+  1:["#f1d98b","#d3b763"], 2:["#e9b7a0","#cc927a"], 3:["#a9b9a0","#879a7e"], 4:["#afc6d6","#8aa5b8"], 5:["#c9785c","#a65c43"],
+  6:["#f1d98b","#d3b763"], 7:["#e9b7a0","#cc927a"], 8:["#a9b9a0","#879a7e"], 9:["#afc6d6","#8aa5b8"], 10:["#c9785c","#a65c43"]
+};
+const DEFS = `
+<defs>
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.11" numOctaves="3" seed="7" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.28  0 0 0 0 0.12  0 0 0 0.9 -0.28" result="g"/>
+    <feComposite in="g" in2="SourceGraphic" operator="in" result="gi"/>
+    <feBlend in="SourceGraphic" in2="gi" mode="multiply"/>
+  </filter>
+  <filter id="grainSoft" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.16" numOctaves="2" seed="3" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0 0.1  0 0 0 0.55 -0.2" result="g"/>
+    <feComposite in="g" in2="SourceGraphic" operator="in" result="gi"/>
+    <feBlend in="SourceGraphic" in2="gi" mode="multiply"/>
+  </filter>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>
+  <filter id="softSm" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+  <linearGradient id="woodTop" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#e8cba2"/><stop offset="1" stop-color="#d6b083"/>
+  </linearGradient>
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#b98c5d"/><stop offset=".35" stop-color="#c99e70"/><stop offset="1" stop-color="#d4ad80"/>
+  </linearGradient>
+  <radialGradient id="light" cx=".22" cy=".12" r=".9">
+    <stop offset="0" stop-color="#fff8ec" stop-opacity=".55"/><stop offset=".6" stop-color="#fff8ec" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="bgGrad" cx=".4" cy=".3" r="1">
+    <stop offset="0" stop-color="#f3ebe0"/><stop offset="1" stop-color="#e2d4c2"/>
+  </radialGradient>
+  <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#f0c7a6"/><stop offset="1" stop-color="#d9a17c"/>
+  </linearGradient>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#cfd2d3"/><stop offset="1" stop-color="#8e9496"/>
+  </linearGradient>
+</defs>`;
+
+// A chunky wooden numeral: dark extrusion, stained face with grain, soft top highlight.
+function numeral(n, x, y, size, {rot = 0, lift = 0, shadow = true} = {}) {
+  const [face, side] = PIECE[n];
+  const t = n === 1 ? "I" : n === 10 ? "I0" : String(n);
+  const ls = t.length > 1 ? size * 0.04 : 0;
+  const attrs = `x="0" y="0" text-anchor="middle" dominant-baseline="central" font-family="Fredoka, Nunito Sans, sans-serif" font-weight="600" font-size="${size}" letter-spacing="${ls}" stroke-linejoin="round"`;
+  const sw = size * 0.07;
+  const sh = shadow ? `<text ${attrs} fill="#3b2a1c" stroke="#3b2a1c" stroke-width="${sw}" opacity="${0.28 + lift*0.004}" transform="translate(${6 + lift*0.5},${9 + lift*0.7})" filter="url(#softSm)">${t}</text>` : "";
+  const depth = Math.max(3, size * 0.05);
+  let ext = "";
+  for (let i = depth; i > 0; i -= 1) ext += `<text ${attrs} fill="${side}" stroke="${side}" stroke-width="${sw}" transform="translate(${i*0.45},${i*0.8})">${t}</text>`;
+  return `<g class="piece" data-n="${n}" data-size="${size}" transform="translate(${x},${y}) rotate(${rot})">${sh}${ext}
+    <text ${attrs} fill="${face}" stroke="${face}" stroke-width="${sw}" filter="url(#grainSoft)">${t}</text>
+  </g>`;
+}
+
+// A square recess with a numeral-shaped well cut into it, the same size as its piece.
+function recessCell(x, y, s, n, filled, size, cx = x + s/2, cy = y + s/2 - 2) {
+  const t = n === 1 ? "I" : n === 10 ? "I0" : String(n), ls = t.length > 1 ? size * 0.04 : 0, sw = size * 0.07;
+  const a = `x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-family="Fredoka, Nunito Sans, sans-serif" font-weight="600" font-size="${size}" letter-spacing="${ls}" stroke-linejoin="round"`;
+  const well = `
+    <text ${a} fill="#efd7b2" stroke="#efd7b2" stroke-width="${sw+4}" transform="translate(1.5,2.5)">${t}</text>
+    <text ${a} fill="#7a5434" stroke="#7a5434" stroke-width="${sw+3}">${t}</text>
+    <text ${a} fill="#a77b51" stroke="#a77b51" stroke-width="${sw*0.3}" transform="translate(3,4.5)">${t}</text>`;
+  return `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="${s*0.13}" fill="url(#recess)"/>
+    <rect x="${x+1}" y="${y+1}" width="${s-2}" height="${s-2}" rx="${s*0.13}" fill="none" stroke="#9c7149" stroke-opacity=".55" stroke-width="2.5"/>
+    <path d="M${x+s*0.13} ${y+s-0.5} H${x+s-s*0.13}" stroke="#f1dcbc" stroke-width="2" stroke-linecap="round" opacity=".8"/>${well}`;
+}
+
+function board(bx, by, bw, bh, cell, gap, placed) {
+  const r = 38;
+  let out = `<rect x="${bx+8}" y="${by+30}" width="${bw}" height="${bh}" rx="${r}" fill="#4a3424" opacity=".35" filter="url(#soft)"/>
+    <rect x="${bx}" y="${by+16}" width="${bw}" height="${bh}" rx="${r}" fill="#b5885a"/>
+    <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${r}" fill="url(#woodTop)" filter="url(#grain)"/>
+    <rect x="${bx+2}" y="${by+2}" width="${bw-4}" height="${bh-4}" rx="${r-2}" fill="none" stroke="#fff6e6" stroke-opacity=".5" stroke-width="2"/>`;
+  const gx = bx + (bw - (5*cell + 4*gap)) / 2, gy = by + (bh - (2*cell + gap)) / 2 - 10;
+  const pieces = [];
+  for (let i = 0; i < 10; i++) {
+    const n = i + 1, cx = gx + (i % 5) * (cell + gap), cy = gy + Math.floor(i / 5) * (cell + gap);
+    const filled = placed.includes(n);
+    out += recessCell(cx, cy, cell, n, filled, n === 10 ? cell*0.85 : cell*1.1);
+    if (filled) pieces.push(numeral(n, cx + cell/2, cy + cell/2 - 2, n === 10 ? cell*0.85 : cell*1.1, {lift: 0}));
+  }
+  out += pieces.join("");
+  out += `<text x="${bx+bw/2}" y="${by+bh-26}" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="600" font-size="13" letter-spacing="5" fill="#a87d52" opacity=".8">LITTLE LANTERNS · COUNT 1 TO 10</text>`;
+  return out;
+}
+
+const hero = `<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wooden ten-frame counting board with seven pastel numeral pieces seated and three beside it">${DEFS}
+  <rect width="1200" height="800" fill="url(#bgGrad)"/>
+  ${board(130, 90, 940, 470, 150, 22, [1,2,3,5,6,7,9])}
+  ${numeral(4, 330, 690, 165, {rot: -14, lift: 18})}
+  ${numeral(8, 600, 695, 165, {rot: 9, lift: 18})}
+  ${numeral(10, 880, 690, 128, {rot: -6, lift: 18})}
+  <rect width="1200" height="800" fill="url(#light)"/>
+</svg>`;
+
+const closeup = `<svg viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Close-up of a child's fingers lifting the number 4 while the 3 sits seated">${DEFS}
+  <rect width="600" height="520" fill="url(#woodTop)" filter="url(#grain)"/>
+  ${recessCell(40, 150, 230, 3, true, 232, 155, 258)}
+  ${numeral(3, 155, 258, 232)}
+  ${recessCell(300, 150, 230, 4, false, 232, 415, 258)}
+  <ellipse cx="420" cy="290" rx="78" ry="62" fill="#3b2a1c" opacity=".22" filter="url(#soft)"/>
+  ${numeral(4, 405, 225, 252, {rot: -8, lift: 50})}
+  <g>
+    <path d="M660 40 C 605 60, 550 88, 505 115" stroke="#b57f5c" stroke-opacity=".3" stroke-width="54" stroke-linecap="round" fill="none" transform="translate(4,8)"/>
+    <path d="M660 40 C 605 60, 550 88, 505 115" stroke="url(#skin)" stroke-width="50" stroke-linecap="round" fill="none"/>
+    <path d="M640 60 C 600 74, 560 94, 528 112" stroke="#fbe3d2" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <ellipse cx="509" cy="112" rx="15" ry="11" fill="#f6dccb" transform="rotate(-28 509 112)"/>
+    <path d="M660 440 C 605 410, 555 380, 510 355" stroke="#b57f5c" stroke-opacity=".3" stroke-width="58" stroke-linecap="round" fill="none" transform="translate(3,8)"/>
+    <path d="M660 440 C 605 410, 555 380, 510 355" stroke="url(#skin)" stroke-width="54" stroke-linecap="round" fill="none"/>
+    <path d="M640 410 C 600 390, 565 368, 532 350" stroke="#fbe3d2" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <ellipse cx="515" cy="353" rx="16" ry="12" fill="#f6dccb" transform="rotate(28 515 353)"/>
+  </g>
+  <g fill="none" stroke="#7a5a3c" stroke-width="2.5" stroke-linecap="round" opacity=".55">
+    <path d="M58 130 q -14 -14 -4 -30"/><path d="M84 122 q -6 -18 8 -28"/>
+  </g>
+  <text x="44" y="96" font-family="Nunito Sans, sans-serif" font-weight="600" font-size="15" fill="#6d4e33" opacity=".85">click</text>
+  <rect width="600" height="520" fill="url(#light)"/>
+</svg>`;
+
+const section = `<svg viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cross-section showing a magnet in the piece above a steel disc under the recess">${DEFS}
+  <rect width="600" height="520" fill="#f3ebe0"/>
+  <g font-family="Nunito Sans, sans-serif" font-size="15" fill="#5b4636">
+    <rect x="60" y="300" width="480" height="110" rx="18" fill="url(#woodTop)" filter="url(#grain)"/>
+    <path d="M200 300 v 10 h 200 v -10 z" fill="#c99e70"/><path d="M210 310 v 26 q 0 8 8 8 h 164 q 8 0 8 -8 v -26 z" fill="#8a6140"/>
+    <rect x="270" y="361" width="60" height="12" rx="4" fill="url(#steel)"/>
+    <rect x="210" y="150" width="180" height="70" rx="16" fill="#e9b7a0" filter="url(#grainSoft)"/>
+    <rect x="210" y="210" width="180" height="10" rx="5" fill="#cc927a"/>
+    <rect x="275" y="206" width="50" height="12" rx="4" fill="#8f8a86"/>
+    <g stroke="#b86a4f" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <path d="M300 238 v 80" stroke-dasharray="5 6"/>
+      <path d="M292 308 l 8 12 l 8 -12"/>
+    </g>
+    <g stroke="#9c8572" stroke-width="1.3" fill="none">
+      <path d="M390 172 h 60"/><path d="M325 212 h 125"/><path d="M330 367 h 120"/><path d="M392 336 h 58"/><path d="M400 305 h 50"/>
+    </g>
+    <text x="458" y="176">Wooden numeral</text>
+    <text x="458" y="216">Sealed magnet</text>
+    <text x="458" y="309">Square recess</text><text x="458" y="340">Numeral well</text>
+    <text x="458" y="371">Hidden steel disc</text>
+    <text x="300" y="444" text-anchor="middle" font-size="14" fill="#7a6a5c">Solid beech board</text>
+    <text x="300" y="96" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="22" fill="#3b2f26">Lift, line up, click</text>
+    <text x="300" y="122" text-anchor="middle" font-size="14" fill="#7a6a5c">Cross-section, not to scale</text>
+  </g>
+</svg>`;
+
+document.getElementById("hero").innerHTML = hero;
+document.getElementById("closeup").innerHTML = closeup;
+document.getElementById("section").innerHTML = section;
+
+// Raised tracing dots along each numeral's writing path (normalised to the glyph's ink box, y down).
+const STROKES = {
+  1: ["M .5 .06 L .5 .94"],
+  2: ["M .2 .27 C .24 .08 .8 .02 .8 .3 C .8 .5 .45 .7 .17 .9 L .86 .9"],
+  3: ["M .2 .17 C .45 .02 .82 .07 .78 .28 C .75 .43 .58 .47 .45 .47 C .85 .47 .88 .68 .82 .8 C .7 .98 .3 .98 .16 .84"],
+  4: ["M .22 .1 L .16 .63 L .9 .63", "M .73 .1 L .73 .92"],
+  5: ["M .8 .1 L .3 .1 L .25 .42 C .5 .32 .86 .4 .84 .65 C .82 .92 .38 .97 .16 .82"],
+  6: ["M .72 .1 C .42 .07 .18 .33 .18 .6 C .18 .86 .34 .91 .5 .91 C .7 .91 .82 .78 .82 .64 C .82 .47 .68 .4 .52 .4 C .34 .4 .2 .5 .18 .6"],
+  7: ["M .12 .1 L .86 .1 L .4 .92"],
+  8: ["M .74 .2 C .64 .06 .28 .08 .28 .26 C .28 .44 .76 .5 .78 .71 C .8 .92 .2 .92 .22 .71 C .24 .5 .72 .44 .72 .26"],
+  9: ["M .8 .32 C .8 .14 .62 .09 .5 .09 C .3 .09 .18 .22 .18 .36 C .18 .52 .32 .6 .5 .6 C .68 .6 .8 .5 .8 .32 L .74 .92"],
+  10: ["M .14 .07 L .14 .93", "M .68 .09 C .5 .09 .44 .3 .44 .5 C .44 .72 .52 .91 .68 .91 C .84 .91 .92 .72 .92 .5 C .92 .3 .86 .09 .68 .09"]
+};
+// Ink box of a piece's face glyph in its own coordinates: SVG gives the em box, canvas gives the ink inside it.
+function inkBox(g, n, size) {
+  const t = n === 1 ? "I" : n === 10 ? "I0" : String(n);
+  const faces = g.querySelectorAll(":scope > text"), face = faces[faces.length - 1];
+  const em = face.getBBox();
+  const ctx = document.createElement("canvas").getContext("2d");
+  ctx.font = `600 ${size}px Fredoka`;
+  if (t.length > 1) ctx.letterSpacing = `${size*0.04}px`;
+  const m = ctx.measureText(t), half = size*0.035;
+  const top = em.y + (m.fontBoundingBoxAscent - m.actualBoundingBoxAscent) - half;
+  const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent + 2*half;
+  const cx = em.x + em.width/2, w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight + 2*half;
+  const left = cx - m.width/2 - m.actualBoundingBoxLeft + (m.width/2 - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft)/2) - half;
+  return { x: cx - w/2, y: top, w, h };
+}
+function addDots() {
+  const NS = "http://www.w3.org/2000/svg";
+  document.querySelectorAll("g.piece").forEach(g => {
+    if (g.querySelector(".dots")) return;
+    const n = +g.dataset.n, size = +g.dataset.size, b = inkBox(g, n, size), side = PIECE[n][1];
+    const X = u => b.x + u*b.w, Y = v => b.y + v*b.h;
+    const layer = document.createElementNS(NS, "g"); layer.setAttribute("class", "dots");
+    let html = "";
+    STROKES[n].forEach((d, si) => {
+      const pd = d.replace(/(-?\.?\d*\.?\d+)\s+(-?\.?\d*\.?\d+)/g, (m, u, v) => `${X(+u)} ${Y(+v)}`);
+      const path = document.createElementNS(NS, "path"); path.setAttribute("d", pd); layer.appendChild(path);
+      const L = path.getTotalLength(), step = size*0.075, r = size*0.019, count = Math.max(2, Math.round(L/step));
+      for (let i = 0; i <= count; i++) {
+        const p = path.getPointAtLength(L*i/count), big = i === 0, rr = big ? r*1.9 : r;
+        html += `<circle cx="${p.x + rr*0.25}" cy="${p.y + rr*0.35}" r="${rr}" fill="${side}" opacity=".9"/>
+          <circle cx="${p.x}" cy="${p.y}" r="${rr}" fill="${side}" style="filter:brightness(1.08)"/>
+          <circle cx="${p.x - rr*0.3}" cy="${p.y - rr*0.3}" r="${rr*0.38}" fill="#fff" opacity=".28"/>`;
+      }
+      path.remove();
+    });
+    layer.innerHTML = html;
+    g.appendChild(layer);
+  });
+}
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => document.fonts.load("600 100px Fredoka")).then(addDots, addDots);
+
+// Scale plate: 20 px = 1 cm. Wrist crease and piece base share y = 500.
+const CM = 20, BASE = 500;
+let ruler = "";
+for (let c = 0; c <= 12; c++) {
+  const y = BASE - c*CM;
+  ruler += `<path d="M60 ${y} h ${c % 2 ? 8 : 14}" stroke="#7a6a5c" stroke-width="1.5"/>`;
+  if (c % 2 === 0) ruler += `<text x="52" y="${y+5}" text-anchor="end" font-family="Nunito Sans, sans-serif" font-size="13" fill="#7a6a5c">${c}</text>`;
+}
+const finger = (x, len, w = 26) => `<rect x="${x}" y="${BASE - 130 - len}" width="${w}" height="${len + 30}" rx="${w/2}" fill="url(#skin)"/>
+  <ellipse cx="${x + w/2}" cy="${BASE - 130 - len + 12}" rx="${w*0.32}" ry="${w*0.38}" fill="#f6dccb" opacity=".8"/>`;
+const scale = `<svg viewBox="0 190 760 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A child's hand drawn next to an 8 cm wooden numeral at the same scale">${DEFS}
+  <rect y="190" width="760" height="390" fill="#f3ebe0"/>
+  <path d="M60 ${BASE} V ${BASE - 12*CM}" stroke="#7a6a5c" stroke-width="1.5"/>${ruler}
+  <text x="30" y="${BASE - 12*CM - 18}" font-family="Nunito Sans, sans-serif" font-size="13" fill="#7a6a5c">cm</text>
+  <g>
+    <rect x="152" y="${BASE - 10}" width="96" height="42" rx="16" fill="url(#skin)"/>
+    ${finger(140, 90)}${finger(170, 100)}${finger(200, 92)}${finger(230, 72, 24)}
+    <rect x="138" y="${BASE - 130}" width="120" height="130" rx="42" fill="url(#skin)"/>
+    <g transform="rotate(-38 150 ${BASE - 40})"><rect x="132" y="${BASE - 130}" width="30" height="96" rx="15" fill="url(#skin)"/>
+      <ellipse cx="147" cy="${BASE - 116}" rx="9" ry="11" fill="#f6dccb" opacity=".8"/></g>
+  </g>
+  <g stroke="#b86a4f" stroke-width="1.5" stroke-dasharray="5 5" fill="none" opacity=".8">
+    <path d="M74 ${BASE - 11.5*CM} H 620"/><path d="M74 ${BASE - 8*CM} H 620"/><path d="M74 ${BASE} H 620"/>
+  </g>
+  <g font-family="Nunito Sans, sans-serif" font-size="14" fill="#5b4636">
+    <text x="628" y="${BASE - 11.5*CM + 5}">11.5 cm hand</text>
+    <text x="628" y="${BASE - 8*CM + 5}">8 cm numeral</text>
+  </g>
+  <g id="scalePiece">${numeral(8, 0, 0, 220, {lift: 10})}</g>
+  <text x="198" y="560" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="600" font-size="14" fill="#5b4636">Child aged 3 to 4</text>
+  <text x="450" y="560" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="600" font-size="14" fill="#5b4636">Numeral piece</text>
+</svg>`;
+document.getElementById("scale").innerHTML = scale;
+// Fit the numeral's drawn glyph exactly between the 0 and 8 cm lines.
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+  const g = document.getElementById("scalePiece");
+  const face = g.querySelectorAll("text")[g.querySelectorAll("text").length - 1];
+  const bb = face.getBBox();
+  const inkH = bb.height * 0.68;
+  const k = (8*CM) / inkH;
+  const cy = bb.y + bb.height/2;
+  g.setAttribute("transform", `translate(450 ${BASE - 4*CM}) scale(${k}) translate(0 ${-cy})`);
+});
+
+</script>
+</body>
+</html>
