@@ -12,7 +12,11 @@ export const site = {
 
   // The full public URL once the site is live, e.g. 'https://learninglanterns.com'.
   // Used for canonical links and social previews. Leave null until known.
-  url: null,
+  url: 'https://littlelanternsme.netlify.app',
+
+  // The verification code from Google Search Console ("HTML tag" method):
+  // only the content="…" value. Leave null until you have it.
+  googleSiteVerification: process.env.LL_GOOGLE_SITE_VERIFICATION || null,
 
   // Where the site is served from. '/' for a domain root, or '/repo-name/'
   // for a project page on GitHub Pages. Only the 404 page needs this,

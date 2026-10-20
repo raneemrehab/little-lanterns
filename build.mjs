@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { site } from './src/config.mjs';
 import { page } from './src/components/layout.mjs';
 import { lantern } from './src/components/doodles.mjs';
 import { home } from './src/pages/home.mjs';
@@ -124,6 +125,14 @@ async function build() {
   const literacyDir = join(here, 'literacy/play');
   if (existsSync(literacyDir)) {
     await cp(literacyDir, join(out, 'literacy/play'), { recursive: true, filter: (src) => !/(TRACKER\.md|README\.md)$/.test(src) });
+  }
+
+  // Help search engines find every public page. Needs site.url.
+  if (site.url && !preview) {
+    const base = site.url.replace(/\/$/, '');
+    const urls = pages.filter((p) => !p.noindex && !p.path.endsWith('.html')).map((p) => `  <url><loc>${base}/${p.path}</loc></url>`);
+    await writeFile(join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+    await writeFile(join(out, 'robots.txt'), `User-agent: *\nDisallow: /account/\nDisallow: /api/\n\nSitemap: ${base}/sitemap.xml\n`);
   }
 
   console.log(`Built ${pages.length} pages into ${out}`);
