@@ -32,7 +32,7 @@
   }
   if (burger) {
     burger.addEventListener('click', function () { setNav(burger.getAttribute('aria-expanded') !== 'true'); });
-    window.matchMedia('(min-width: 961px)').addEventListener('change', function (e) { if (e.matches) setNav(false); });
+    window.matchMedia('(min-width: 1341px)').addEventListener('change', function (e) { if (e.matches) setNav(false); });
   }
 
   // ---- Studio sub-menu ---------------------------------------------------------
@@ -49,11 +49,11 @@
       setMenu(toggle.getAttribute('aria-expanded') !== 'true');
     });
     document.addEventListener('click', function (e) {
-      if (!menu.contains(e.target) && window.matchMedia('(min-width: 961px)').matches) setMenu(false);
+      if (!menu.contains(e.target) && window.matchMedia('(min-width: 1341px)').matches) setMenu(false);
     });
     menu.addEventListener('focusout', function (e) {
       var parent = toggle.parentElement;
-      if (window.matchMedia('(min-width: 961px)').matches && !parent.contains(e.relatedTarget)) setMenu(false);
+      if (window.matchMedia('(min-width: 1341px)').matches && !parent.contains(e.relatedTarget)) setMenu(false);
     });
   }
 

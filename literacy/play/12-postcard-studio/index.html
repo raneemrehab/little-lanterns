@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Postcard Studio · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.card{position:relative;background:#fffdf8;border-radius:2cqmin;box-shadow:0 1.2cqmin 0 rgba(0,0,0,.12);padding:2cqmin 3cqmin;display:flex;flex-direction:column;align-items:center;gap:1.6cqmin;min-width:60cqmin;max-width:94cqmin}
+.card .picture{font-size:10cqmin;line-height:1;letter-spacing:-.5cqmin}
+.line{display:flex;flex-wrap:wrap;gap:1cqmin;justify-content:center;align-items:flex-end;min-height:9cqmin}
+.tile{all:unset;box-sizing:border-box;font:800 4.6cqmin/1 'Nunito Sans',sans-serif;color:var(--g-ink);background:#fff6dd;border:.4cqmin solid #e6c98a;border-radius:1.2cqmin;padding:1.2cqmin 1.8cqmin;min-width:6cqmin;min-height:8cqmin;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 .6cqmin 0 rgba(0,0,0,.1);cursor:pointer;touch-action:manipulation}
+.tile.slot{background:transparent;border-style:dashed;color:transparent;box-shadow:none;min-width:10cqmin}
+.tile.stop{min-width:4.4cqmin;padding:1.2cqmin .8cqmin}
+.tile.typed{background:#e7f1fb;border-color:#8fb3d9;min-width:14cqmin}
+.tile.reading{background:#f5d57a;transform:translateY(-.8cqmin)}
+.tile.pulse,.btn.pulse{animation:glow .7s ease-in-out 4 alternate}
+.tile.used{visibility:hidden}
+.tray{display:flex;flex-wrap:wrap;gap:1.4cqmin;justify-content:center;max-width:94cqmin}
+.tools{display:flex;gap:2cqmin;flex-wrap:wrap;justify-content:center}
+.stamp{position:absolute;right:2cqmin;top:1cqmin;font-size:9cqmin;animation:pop .4s ease both}
+.keys{display:grid;grid-template-columns:repeat(4,auto);gap:1.4cqmin;justify-content:center}
+.key{min-width:11cqmin;min-height:11cqmin;font:800 5.4cqmin/1 'Nunito Sans',sans-serif}
+.tile:focus-visible{outline:.8cqmin solid var(--g-butter);outline-offset:.4cqmin}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Postcard Studio (Literacy · Unit 12): planning, building and checking a sentence. Voice: LL-LIT-G12-VO01…VO15, the
+   shared narrator lines and the word recordings (WD-*). "Read it back" reads exactly the tiles on the card, one word
+   recording at a time, so every sentence uses recorded words only ("I see a …"). The child says the sentence aloud
+   (nothing is recorded from the child); the "I've said it" button moves on. Read-back speed is the recordings'
+   own speed with a fixed gap between words (WORD_GAP_MS); the audio is never sped up or slowed down. */
+(() => {
+  const PIC = window.LL_PICS;
+  const has = (w) => !!window.LL_LINES['WD-' + w.toLowerCase()];
+  const WORD_GAP_MS = 250;
+  const levels = [
+    { label: '1 · Beacon (5–6)', mode: 'given' },
+    { label: '2 · Beacon (6–7)', mode: 'punct' },
+    { label: '3 · Lighthouse (7–8)', mode: 'distract' },
+    { label: '4 · Lighthouse (8–9)', mode: 'type' },
+  ];
+  const NOUNS = ['crab', 'cat', 'dog', 'pig', 'fish', 'frog', 'hen', 'duck', 'sun', 'moon', 'boat', 'ship', 'bus', 'kite', 'fox', 'goat', 'shell', 'drum'];
+  const SHORT = ['cat', 'dog', 'pig', 'hen', 'fox', 'sun', 'bus'];          // Level 4: typed words
+  // A sentence is a list of words; '.' is the full stop.
+  function sentence(mode) {
+    const n = LL.shuffle(NOUNS.filter((w) => PIC[w]));
+    if (mode === 'given') return { words: ['I', 'see', 'a', n[0]], pic: PIC[n[0]] };
+    if (mode === 'punct') return { words: ['I', 'see', 'a', 'big', n[0]], pic: PIC[n[0]] };
+    if (mode === 'distract') return { words: ['I', 'see', 'a', n[0], 'and', 'a', n[1]], pic: PIC[n[0]] + PIC[n[1]], extra: 'run' };
+    const w = LL.pick(SHORT);
+    return { words: ['I', 'see', 'a', 'huge', w], pic: PIC[w], typed: 4, better: 3 };
+  }
+
+  LL.game({
+    code: 'G12', name: 'Postcard Studio', accent: '#d9785f',
+    guide: { name: 'Penny the pigeon', kind: 'bird', color: '#a9b6c9' },
+    bg: 'linear-gradient(#fdf3df 0%, #f7e6c4 100%)',
+    reward: { icon: '💌' }, doneLine: 'Your postcards are on their way!',
+    levels, rounds: 5, intro: ['VO01'], idle: 'VO13', goodbye: 'VO15',
+    complete: ['VO14', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => /^(G12-|SH-|WD-)/.test(k)),
+    async levelStart(c) { if (c.firstTime('instr-' + c.level) || c.level === 0) await c.say('VO02', 'instruction'); },   // Say your sentence first. Then build it…
+    async round(c, i) {
+      const L = c.L, S = sentence(L.mode);
+      const target = [...S.words, '.'];
+      const n = target.length;
+      // Level 1: the full stop is pre-placed. Level 4: the frame is pre-built except the typed word and the better word.
+      const slots = target.map((w, k) => ({ word: null, fixed: false }));
+      if (L.mode === 'given') slots[n - 1] = { word: '.', fixed: true };
+      if (L.mode === 'type') target.forEach((w, k) => { if (k !== S.typed) slots[k] = { word: k === S.better ? 'big' : w, fixed: k !== S.better }; });
+      let capital = L.mode === 'given' || L.mode === 'type';          // the capital tile is needed at Levels 2 and 3
+      const card = c.el(`<div class="card"><div class="picture" aria-label="Postcard picture">${S.pic}</div><div class="line" aria-label="Your sentence"></div></div>`);
+      const line = card.querySelector('.line');
+      const tray = c.el(`<div class="tray"></div>`);
+      const tools = c.el(`<div class="tools"></div>`);
+      const readBtn = c.el(`<button class="btn" type="button" aria-label="Read it back">🔊 Read it back</button>`);
+      const capBtn = c.el(`<button class="btn" type="button" aria-label="Capital letter">⇧ Capital letter</button>`);
+      const saidBtn = c.el(`<button class="btn" type="button" aria-label="I've said it">🗣️ I've said it</button>`);
+      if (!capital) tools.appendChild(capBtn);
+      tools.appendChild(readBtn);
+      // Tiles in the tray: every word not pre-placed, the full stop (Levels 2–3), and the distractor (Level 3).
+      let trayWords = [];
+      if (L.mode !== 'type') {
+        trayWords = S.words.map((w, k) => (k === 0 && !capital ? 'i' : w));
+        if (L.mode !== 'given') trayWords.push('.');
+        if (S.extra) trayWords.push(S.extra);
+      }
+      const trayTiles = LL.shuffle(trayWords).map((w) => { const t = c.el(`<button class="tile${w === '.' ? ' stop' : ''}" type="button" aria-label="${w === '.' ? 'full stop' : w}">${w}</button>`); t.dataset.w = w; tray.appendChild(t); return t; });
+      const slotEls = slots.map(() => null);
+      const shown = (k) => { const w = slots[k].word; if (!w) return ''; return k === 0 && capital ? w[0].toUpperCase() + w.slice(1) : w; };
+      function draw() {
+        line.replaceChildren(...slots.map((s, k) => {
+          const isTyped = L.mode === 'type' && k === S.typed;
+          const e = c.el(`<button class="tile${s.word ? '' : ' slot'}${s.word === '.' ? ' stop' : ''}${isTyped ? ' typed' : ''}" type="button" aria-label="${s.word ? (s.word === '.' ? 'full stop' : shown(k)) : isTyped ? 'Type the missing word' : 'empty space'}">${s.word ? shown(k) : isTyped ? '✏️' : '&nbsp;'}</button>`);
+          slotEls[k] = e; return e;
+        }));
+      }
+      draw();
+      c.area.replaceChildren(card, c.el(`<div class="tools"></div>`));
+      c.area.lastChild.appendChild(saidBtn);
+
+      // 1 · Plan: say it first.
+      c.setPrompt(() => c.say('VO03', 'question'));
+      c.setClue(null);
+      await c.say('VO03', 'question');                              // What can you see? Say your sentence.
+      saidBtn.dataset.ok = '1';
+      await c.tap([saidBtn]);
+      c.area.replaceChildren(card, tray, tools);
+
+      // 2 · Build.
+      c.setPrompt(() => c.say(L.mode === 'type' ? 'VO09' : 'VO04', 'question'));
+      c.setClue(async () => { await c.say(L.mode === 'type' ? 'VO09' : 'VO04', 'instruction'); for (const e of slotEls) if (e.classList.contains('slot') || e.classList.contains('typed')) { c.restart(e, 'wiggle'); } });
+      await c.say(L.mode === 'type' ? 'VO09' : 'VO04', 'instruction');    // Now build your sentence. / Type the missing word.
+      if (i === 0) await c.hearAgainTip();
+      let checked = false, fixes = 0, failedSinceChange = false, betterDone = L.mode !== 'type';
+      const full = () => slots.every((s) => s.word);
+      const wordAt = (k) => (slots[k].word || '').toLowerCase();
+      const firstWrong = () => slots.findIndex((s, k) => wordAt(k) !== target[k].toLowerCase());
+
+      for (;;) {
+        // Mark the next helpful step for the automated tests (data-ok); children see no difference.
+        const live = [];
+        const nextIdx = slots.findIndex((s) => !s.word);
+        trayTiles.forEach((t) => { if (!t.classList.contains('used')) { live.push(t); t.dataset.ok = nextIdx >= 0 && t.dataset.w.toLowerCase() === target[nextIdx].toLowerCase() && !failedSinceChange ? '1' : '0'; } });
+        slotEls.forEach((e, k) => { if (slots[k].word && !slots[k].fixed) { live.push(e); e.dataset.ok = failedSinceChange && k === firstWrong() ? '1' : '0'; } else if (L.mode === 'type' && k === S.typed) { live.push(e); e.dataset.ok = !slots[k].word ? '1' : failedSinceChange && k === firstWrong() ? '1' : '0'; } });
+        if (L.mode === 'type' && slots[S.typed].word && !betterDone) { const e = slotEls[S.better]; live.push(e); e.dataset.ok = '1'; }
+        if (!capital) { live.push(capBtn); capBtn.dataset.ok = full() && failedSinceChange && firstWrong() < 0 ? '1' : '0'; }
+        live.push(readBtn); readBtn.dataset.ok = full() && betterDone && !failedSinceChange ? '1' : '0';
+        const tapped = await c.tap(live);
+
+        if (tapped === readBtn) {
+          const ok = await c.busy(() => readBack());
+          if (ok) break;
+          failedSinceChange = true; fixes++;
+          continue;
+        }
+        failedSinceChange = false;
+        if (tapped === capBtn) { capital = true; capBtn.remove(); draw(); c.sfx.chime(); continue; }
+        if (L.mode === 'type' && tapped === slotEls[S.typed]) { await typeWord(); draw(); continue; }
+        if (L.mode === 'type' && tapped === slotEls[S.better] && !betterDone) { await betterWord(); betterDone = true; draw(); continue; }
+        const k = slotEls.indexOf(tapped);
+        if (k >= 0) {                                               // a placed tile goes back to the tray
+          const w = slots[k].word; slots[k] = { word: null, fixed: false };
+          const t = trayTiles.find((x) => x.classList.contains('used') && x.dataset.w === w); if (t) t.classList.remove('used');
+          draw(); continue;
+        }
+        // a tray tile goes into the first empty space and is read aloud
+        const at = slots.findIndex((s) => !s.word);
+        if (at < 0) { c.restart(readBtn, 'wiggle'); continue; }
+        tapped.classList.add('used'); slots[at] = { word: tapped.dataset.w, fixed: false }; draw();
+        if (tapped.dataset.w !== '.') c.say('WD-' + tapped.dataset.w.toLowerCase(), 'count').catch(() => {});
+        if (full() && !checked) { checked = true; await c.say('VO05', 'instruction'); }   // Tap 'read it back' to check.
+      }
+      // Stamped.
+      await c.busy(async () => {
+        card.appendChild(c.el(`<span class="stamp" aria-hidden="true">📮</span>`)); c.sfx.fanfare(); c.hop();
+        if (fixes) await c.say('VO12', 'praise');                    // You checked it yourself!
+        await c.say('VO11', 'praise');                               // Stamped! Your postcard is ready.
+      });
+
+      // Reads exactly what is on the card, then names the first gap: sense, capital, then full stop.
+      async function readBack() {
+        for (let k = 0; k < n; k++) {
+          const w = slots[k].word; if (!w || w === '.') continue;
+          slotEls[k].classList.add('reading');
+          if (has(w)) await c.say('WD-' + w.toLowerCase(), 'count'); else await c.wait(700);
+          slotEls[k].classList.remove('reading');
+          await c.wait(WORD_GAP_MS);
+        }
+        await c.wait(500);
+        const words = slots.map((s, k) => wordAt(k));
+        const wrongWord = words.findIndex((w, k) => w !== '.' && target[k] !== '.' && w !== target[k].toLowerCase()) ;
+        const missingWord = words.findIndex((w, k) => !w && target[k] !== '.');
+        if (wrongWord >= 0 || missingWord >= 0 || (words.includes('.') && words.indexOf('.') !== n - 1)) {
+          const k = wrongWord >= 0 ? wrongWord : missingWord >= 0 ? missingWord : words.indexOf('.');
+          slotEls[k]?.classList.add('pulse'); await c.say('VO08', 'retry');   // Does that make sense?
+          return false;
+        }
+        if (!capital) { slotEls[0].classList.add('pulse'); capBtn.classList.add('pulse'); await c.say('VO06', 'retry'); return false; }   // Sentences start with a capital letter.
+        if (words[n - 1] !== '.') { slotEls[n - 1].classList.add('pulse'); await c.say('VO07', 'retry'); return false; }   // Don't forget the full stop!
+        return true;
+      }
+
+      // Level 4: a large on-screen keyboard with the word's letters and a few others.
+      async function typeWord() {
+        const want = target[S.typed];
+        const letters = LL.shuffle([...new Set([...want, ...LL.shuffle('abcdefghijklmnoprstuw'.split('').filter((x) => !want.includes(x))).slice(0, 8 - new Set(want).size)])]);
+        let typed = '';
+        const shownWord = c.el(`<div class="tile typed" aria-live="polite">&nbsp;</div>`);
+        const keys = c.el(`<div class="keys"></div>`);
+        const keyEls = letters.map((l) => { const b = c.el(`<button class="opt key" type="button" aria-label="${l}">${l}</button>`); keys.appendChild(b); return b; });
+        const back = c.el(`<button class="opt key" type="button" aria-label="Delete">⌫</button>`);
+        const done = c.el(`<button class="btn" type="button" aria-label="Done">✓ Done</button>`);
+        keys.appendChild(back);
+        c.area.replaceChildren(card, shownWord, keys, c.el(`<div class="tools"></div>`));
+        c.area.lastChild.appendChild(done);
+        for (;;) {
+          keyEls.forEach((b) => { b.dataset.ok = want.startsWith(typed + b.textContent) ? '1' : '0'; });
+          back.dataset.ok = !want.startsWith(typed) ? '1' : '0';
+          done.dataset.ok = typed === want ? '1' : '0';
+          const t = await c.tap([...keyEls, back, ...(typed ? [done] : [])]);
+          if (t === done) break;
+          if (t === back) typed = typed.slice(0, -1); else if (typed.length < 8) typed += t.textContent;
+          shownWord.textContent = typed || ' ';
+        }
+        slots[S.typed] = { word: typed, fixed: false };
+        c.area.replaceChildren(card, tray, tools);
+      }
+      // Level 4: Which word makes it more exciting?
+      async function betterWord() {
+        const row = c.el(`<div class="row"></div>`);
+        const opts = LL.shuffle(['big', 'huge']).map((w) => { const b = c.el(`<button class="opt" type="button" aria-label="${w}"><span class="letter">${w}</span></button>`); row.appendChild(b); return { el: b, ok: w === 'huge', w }; });
+        c.area.replaceChildren(card, row);
+        await c.say('VO10', 'question');
+        await c.choice({ items: opts, reduce: false, onTap: (it) => c.say('WD-' + it.w, 'count').catch(() => {}) });
+        slots[S.better] = { word: 'huge', fixed: true };
+        c.area.replaceChildren(card, tray, tools);
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

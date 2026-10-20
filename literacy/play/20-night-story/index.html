@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Night Story · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.steps{display:flex;gap:2cqmin;flex-wrap:wrap;justify-content:center}
+.step{all:unset;position:relative;width:15cqmin;height:16cqmin;border-radius:2cqmin;background:rgba(255,253,248,.55);border:.5cqmin dashed #8a6a52;display:grid;place-items:center;font:800 5cqmin/1 var(--display);color:#8a6a52}
+.step::before{content:attr(data-n);position:absolute;top:-3.2cqmin;left:50%;transform:translateX(-50%);width:5cqmin;height:5cqmin;border-radius:50%;background:#f5d57a;color:#263238;display:grid;place-items:center;font:800 2.8cqmin/1 var(--body)}
+.step.done{background:var(--g-paper);border-style:solid}
+.step.now{border-color:#7d6cc0;border-width:.7cqmin}
+.cards{display:flex;gap:2.4cqmin;flex-wrap:wrap;justify-content:center}
+.rc{min-width:15cqmin;min-height:15cqmin}
+.rc .em{font-size:9cqmin}
+.rc b{font-size:2.6cqmin}
+.step .rc{transform:scale(.9);box-shadow:none}
+.acting{animation:hop .5s ease}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Night Story (Main · Patterns & Order): sequencing everyday routines. Voice: LL-LIT-G20-VO01…VO10 and the shared
+   narrator lines. Two funny consequences are recorded (pyjamas before the bath, sleep before brushing teeth); any
+   other card in the wrong place gets the shared "Good guess, but try again". */
+(() => {
+  const C = { bath: ['🛁', 'bath'], pyjamas: ['🩳', 'pyjamas'], teeth: ['🪥', 'brush teeth'], story: ['📖', 'story'], sleep: ['😴', 'sleep'],
+    wake: ['⏰', 'wake up'], dress: ['👕', 'get dressed'], breakfast: ['🥣', 'breakfast'], shoes: ['👟', 'shoes on'] };
+  const BED = ['bath', 'pyjamas', 'teeth', 'story', 'sleep'], MORNING = ['wake', 'dress', 'breakfast', 'teeth', 'shoes'];
+  const PAIRS = [['bath', 'pyjamas'], ['teeth', 'sleep'], ['story', 'sleep'], ['wake', 'breakfast'], ['pyjamas', 'teeth'], ['dress', 'shoes']];
+  const levels = [
+    { label: '1 · Glow (3–4)', n: 2 },
+    { label: '2 · Flame (4–5)', n: 3 },
+    { label: '3 · Beacon (5–6)', n: 4 },
+    { label: '4 · Beacon (6–7)', n: 5, swap: true },
+  ];
+  // Sub-sequences that keep the routine's order.
+  function routine(L, i) {
+    if (L.n === 2) return LL.shuffle(PAIRS)[0];
+    const base = i % 2 ? MORNING : BED;
+    if (L.n >= 5) return base.slice();
+    const start = Math.floor(Math.random() * (base.length - L.n + 1));
+    return base.slice(start, start + L.n);
+  }
+  const card = (k) => `<span class="pic"><span class="em">${C[k][0]}</span><b>${C[k][1]}</b></span>`;
+  let used = [];
+
+  LL.game({
+    code: 'G20', name: 'Night Story', accent: '#5f8a64',
+    guide: { name: 'Bao the bear cub', kind: 'bear', color: '#8a6a52' },
+    bg: 'linear-gradient(180deg,#4b4a7c 0%,#6b5f8f 45%,#e8c9a8 100%)',
+    reward: { icon: '🧸' }, doneLine: 'Night night, Bao!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO10',
+    complete: ['VO09', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G20-') || k.startsWith('SH-')),
+    async levelStart(c) { used = []; await c.say('VO02', 'instruction'); await c.dragTip(); },   // Put my bedtime pictures in order.
+    async round(c, i) {
+      const L = c.L, seq = routine(L, i);
+      if (L.swap) return swapRound(c, i, seq);
+      const steps = c.el(`<div class="steps"></div>`);
+      const slots = seq.map((_, k) => { const s = c.el(`<button class="step drop" type="button" data-n="${k + 1}" aria-label="Step ${k + 1}"></button>`); steps.appendChild(s); return s; });
+      const pile = c.el(`<div class="cards"></div>`);
+      const pieces = LL.shuffle(seq).map((k) => { const b = c.el(`<button class="opt rc" type="button" aria-label="${C[k][1]}">${card(k)}</button>`); b.dataset.key = k; b.dataset.piece = '1'; pile.appendChild(b); return b; });
+      c.area.replaceChildren(steps, pile);
+      if (i === 0) await c.hearAgainTip();
+      for (let s = 0; s < seq.length; s++) {
+        slots.forEach((x, k) => x.classList.toggle('now', k === s));
+        pieces.forEach((p) => { p.dataset.target = p.dataset.key === seq[s] ? `Step ${s + 1}` : 'none'; });
+        const ask = s === 0 ? 'VO03' : 'VO04';                      // What do I do first? / What's next?
+        c.setPrompt(() => c.say(ask, 'question'));
+        await c.say(ask, 'question');
+        for (;;) {
+          const live = pieces.filter((p) => !p.closest('.step'));
+          const { piece } = await c.place({ pieces: live, targets: [slots[s]] });
+          if (piece.dataset.key === seq[s]) {
+            await c.busy(async () => { slots[s].appendChild(piece); slots[s].classList.add('done'); piece.classList.remove('ready'); c.sfx.pop(); await c.wait(300); });
+            break;
+          }
+          await c.busy(async () => {
+            c.sfx.soft(); c.restart(piece, 'wiggle');
+            const k = piece.dataset.key;
+            if (k === 'pyjamas' && seq.includes('bath') && seq.indexOf('bath') >= s) await c.say('VO06', 'retry');       // Pyjamas before the bath? I'd get them wet!
+            else if (k === 'sleep' && seq.includes('teeth') && seq.indexOf('teeth') >= s) await c.say('VO07', 'retry');  // Sleep before brushing my teeth? Oops!
+            else await c.say('SH-VO01', 'retry');
+          });
+        }
+      }
+      slots.forEach((x) => x.classList.remove('now'));
+      await actOut(c, slots);
+    },
+  });
+
+  async function actOut(c, slots) {
+    await c.busy(async () => {
+      for (const s of slots) { c.restart(s, 'acting'); c.sfx.tick(slots.indexOf(s) * 2); await c.wait(450); }
+      c.hop(); c.sparkle(slots[slots.length - 1]);
+      await c.say('VO08', 'praise');                                 // That's the right order!
+    });
+  }
+
+  // Level 4: the routine is laid out with two pictures swapped. Tap (or drag) one onto the other to swap them.
+  async function swapRound(c, i, seq) {
+    const a = Math.floor(Math.random() * (seq.length - 1)), shown = seq.slice();
+    [shown[a], shown[a + 1]] = [shown[a + 1], shown[a]];
+    const steps = c.el(`<div class="steps"></div>`);
+    const slots = shown.map((k, n) => { const s = c.el(`<div class="step done drop" data-n="${n + 1}" aria-label="Step ${n + 1}"></div>`); const b = c.el(`<button class="opt rc" type="button" aria-label="${C[k][1]}">${card(k)}</button>`); b.dataset.key = k; s.appendChild(b); steps.appendChild(s); return s; });
+    c.area.replaceChildren(steps);
+    c.setPrompt(() => c.say('VO05', 'question'));
+    await c.say('VO05', 'question');                                 // One picture is in the wrong place. Can you swap it?
+    for (;;) {
+      const cards = slots.map((s) => s.firstElementChild);
+      cards.forEach((p, n) => { p.dataset.piece = '1'; p.dataset.target = n === a ? `Step ${a + 2}` : n === a + 1 ? `Step ${a + 1}` : 'none'; });
+      const { piece, target } = await c.place({ pieces: cards, targets: slots, onSelect: () => {} });
+      const from = slots.indexOf(piece.parentElement), to = slots.indexOf(target);
+      if (from === to) continue;
+      const other = target.firstElementChild;
+      slots[from].appendChild(other); target.appendChild(piece); c.sfx.pop();
+      const now = slots.map((s) => s.firstElementChild.dataset.key);
+      if (now.every((k, n) => k === seq[n])) { await actOut(c, slots); return; }
+      await c.busy(async () => {
+        // put them back, gently
+        slots[from].appendChild(piece); target.appendChild(other);
+        c.sfx.soft(); await c.say('SH-VO01', 'retry');
+      });
+    }
+  }
+})();
+</script>
+</body>
+</html>

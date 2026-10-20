@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lantern Path · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.holder{display:flex;align-items:center;gap:3cqmin}
+.lantern{display:grid;place-items:center;width:12cqmin;height:14cqmin;border-radius:40% 40% 45% 45%;background:#f5d57a;box-shadow:0 0 4cqmin rgba(245,213,122,.7);font:800 6cqmin/1 var(--display);color:#263238}
+.hops{font:800 6cqmin/1 var(--display);background:rgba(255,253,248,.9);padding:1.4cqmin 3cqmin;border-radius:999px}
+.path{display:flex;align-items:flex-end;gap:var(--gap);padding:0 2cqmin;border-bottom:1cqmin solid #b8a58c;max-width:100%}
+.post{all:unset;cursor:pointer;position:relative;width:var(--w);height:20cqmin;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.post .pole{width:1cqmin;height:13cqmin;background:#5f8a64;border-radius:1cqmin}
+.post .lamp{position:absolute;top:2cqmin;width:4cqmin;height:4cqmin;border-radius:50%;background:#fffdf8;border:.4cqmin solid #5f8a64;transition:background .3s,box-shadow .3s}
+.post.lit .lamp{background:#f5d57a;box-shadow:0 0 3cqmin 1cqmin rgba(245,213,122,.9)}
+.post.counting .lamp{background:#ffe9a6}
+.post .lab{position:absolute;bottom:-5.4cqmin;font:800 3cqmin/1 var(--body);color:#263238}
+.post .snail{position:absolute;top:-4cqmin;font-size:6cqmin}
+.post.ready:hover .lamp,.post.glow .lamp{box-shadow:0 0 0 .6cqmin #f5d57a}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Lantern Path (Main · Number Foundations): the number line. Voice: LL-LIT-G26-VO01…VO10, shared narrator lines and
+   the maths number words (NUM-n). */
+(() => {
+  const levels = [
+    { label: '1 · Beacon (5–6)', max: 10, show: 'allButOne' },
+    { label: '2 · Beacon (6–7)', max: 10, show: 'some' },
+    { label: '3 · Lighthouse (7–8)', max: 20, show: 'ends', estimate: true },
+    { label: '4 · Lighthouse (8–9)', max: 10, show: 'some', hop: true },
+  ];
+  let plan = [];
+
+  LL.game({
+    code: 'G26', name: 'Lantern Path', accent: '#3e8a86',
+    guide: { name: 'Sunny the snail', kind: 'snail', color: '#e7a65f' },
+    bg: 'linear-gradient(180deg,#d9ecf2 0%,#eaf3df 55%,#cfe2b8 100%)',
+    reward: { icon: '🐌' }, doneLine: "Sunny's path is all lit up!",
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO10',
+    complete: ['VO09', 'SH-VO03'],
+    preload: () => [...Object.keys(window.LL_LINES).filter((k) => k.startsWith('G26-') || k.startsWith('SH-')), ...Array.from({ length: 21 }, (_, n) => 'NUM-' + n)],
+    async levelStart(c) {
+      const L = c.L; plan = [];
+      while (plan.length < 5) {
+        let t;
+        if (L.hop) { const a = 1 + Math.floor(Math.random() * 6), h = 1 + Math.floor(Math.random() * Math.min(4, L.max - a)); t = { a, h, n: a + h }; }
+        else t = { n: 1 + Math.floor(Math.random() * (L.max - 1)) };
+        if (!plan.some((p) => p.n === t.n)) plan.push(t);
+      }
+      await c.say('VO02', 'instruction');                           // Put each lantern on the right post.
+    },
+    async round(c, i) {
+      const L = c.L, t = plan[i], n = t.n;
+      // which posts show their number
+      const labelled = new Set([0, L.max]);
+      if (L.show === 'allButOne') for (let k = 0; k <= L.max; k++) if (k !== n) labelled.add(k);
+      if (L.show === 'some') { for (let k = 0; k <= L.max; k += 5) labelled.add(k); labelled.delete(n); if (t.a !== undefined) labelled.add(t.a); }
+      const w = L.max > 10 ? 3.6 : 6, gap = L.max > 10 ? 0.6 : 1.4;
+      const path = c.el(`<div class="path" style="--w:${w}cqmin;--gap:${gap}cqmin"></div>`);
+      const posts = [];
+      for (let k = 0; k <= L.max; k++) {
+        const p = c.el(`<button class="post" type="button" aria-label="Post ${labelled.has(k) ? k : ''}"><span class="lamp"></span><span class="pole"></span><span class="lab">${labelled.has(k) ? k : ''}</span></button>`);
+        p.dataset.ok = (L.estimate ? Math.abs(k - n) <= 1 : k === n) ? '1' : '0';
+        path.appendChild(p); posts.push(p);
+      }
+      const holder = c.el(`<div class="holder"></div>`);
+      if (L.hop) { posts[t.a].insertAdjacentHTML('beforeend', '<span class="snail" aria-hidden="true">🐌</span>'); holder.innerHTML = `<span class="hops">+${t.h}</span>`; }
+      else holder.innerHTML = `<span class="lantern" aria-label="Lantern ${n}">${n}</span>`;
+      c.area.replaceChildren(holder, path);
+
+      // count along from the nearest labelled post below the target (or from Sunny)
+      const countAlong = async () => {
+        const from = L.hop ? t.a : Math.max(...[...labelled].filter((k) => k < n));
+        for (let k = from; k <= n; k++) { posts[k].classList.add('counting'); await c.say('NUM-' + k, 'count'); }
+        posts.forEach((p) => p.classList.remove('counting'));
+      };
+      const prompt = async () => {
+        if (L.hop) await c.say('VO05', 'question');                  // Hop along the path. Where will I land?
+        else if (L.estimate) { await c.say('VO04', 'transition'); await c.say('NUM-' + n, 'question'); }
+        else { await c.say('VO03', 'transition'); await c.say('NUM-' + n, 'question'); }   // Where does this lantern go? … seven
+      };
+      c.setPrompt(prompt);
+      c.setClue(async () => { await c.say('VO06', 'instruction'); await countAlong(); });
+      await prompt();
+      if (i === 0) await c.hearAgainTip();
+      for (;;) {
+        const p = await c.tap(posts);
+        const k = posts.indexOf(p);
+        if (k === n || (L.estimate && Math.abs(k - n) <= 1)) {
+          await c.busy(async () => {
+            if (k !== n) { posts[n].classList.add('glow'); await c.say('VO07', 'praise'); }   // Very close! It goes just here.
+            posts[n].classList.add('lit'); posts[n].querySelector('.lab').textContent = n; c.sparkle(posts[n]); c.sfx.chime();
+            // Sunny slides along counting the posts
+            const from = L.hop ? t.a : Math.max(0, n - 3);
+            for (let q = from; q <= n; q++) { posts[q].classList.add('counting'); await c.say('NUM-' + q, 'count'); }
+            await c.say('VO08', 'praise');                           // The post is lit!
+          });
+          return;
+        }
+        await c.busy(async () => {
+          c.restart(p, 'wiggle'); c.sfx.soft();
+          await c.say('VO06', 'instruction');                        // Let's count along from a number we know.
+          await countAlong();
+          await prompt();
+        });
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

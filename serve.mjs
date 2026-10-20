@@ -13,8 +13,24 @@ const types = {
   '.json': 'application/json', '.pdf': 'application/pdf', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
 };
 
+// The help chat and forms post to /api/message. Locally this runs the same
+// function Netlify runs, using WHATSAPP_* / CALLMEBOT_* variables from the
+// shell. Without them it answers "not configured", as the live site would.
+async function runFunction(req, res) {
+  const { default: handler } = await import('./netlify/functions/message.mjs');
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const request = new Request(new URL(req.url, `http://${req.headers.host}`), {
+    method: req.method, headers: req.headers, body: req.method === 'GET' || req.method === 'HEAD' ? undefined : Buffer.concat(chunks),
+  });
+  const response = await handler(request);
+  res.writeHead(response.status, Object.fromEntries(response.headers));
+  res.end(Buffer.from(await response.arrayBuffer()));
+}
+
 createServer(async (req, res) => {
   const url = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (url === '/api/message') return runFunction(req, res);
   let file = normalize(join(root, url));
   if (!file.startsWith(root)) file = root;
   try {

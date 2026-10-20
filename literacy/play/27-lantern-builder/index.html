@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lantern Builder · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.grids{display:flex;gap:5cqmin;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(var(--n),var(--s));grid-auto-rows:var(--s);gap:1cqmin;background:#8a6a52;padding:1.4cqmin;border-radius:2cqmin}
+.grid.model{outline:.8cqmin solid var(--g-butter)}
+.cell{all:unset;display:grid;place-items:center;background:#f1ece2;border-radius:.8cqmin;position:relative}
+.cell.diff{animation:glow .5s ease-in-out 6 alternate}
+.grid.lit{box-shadow:0 0 6cqmin 2cqmin rgba(245,213,122,.85)}
+.gl{all:unset;display:block;width:calc(var(--s) - 1.6cqmin);height:calc(var(--s) - 1.6cqmin);border-radius:1cqmin;box-shadow:0 .6cqmin 0 rgba(0,0,0,.14);cursor:pointer}
+.gl.y{background:#f5d57a}.gl.b{background:#86bde3}.gl.r{background:#e7836c}.gl.g{background:#93b795}
+.gl.circ{border-radius:50%}.gl.tri{clip-path:polygon(50% 5%,95% 95%,5% 95%);border-radius:0;box-shadow:none}
+.gl.sel{outline:.6cqmin solid #263238;outline-offset:.4cqmin}
+.tray{display:flex;gap:1.6cqmin;flex-wrap:wrap;justify-content:center;min-height:9cqmin;--s:9cqmin}
+.mirror{font:800 3cqmin/1 var(--body);background:rgba(255,253,248,.9);padding:1cqmin 2cqmin;border-radius:999px}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Lantern Builder (Main · Hands & Eyes): copying designs. Voice: LL-LIT-G27-VO01…VO09 and the shared narrator lines.
+   When every piece is placed the two lanterns are compared; any cell that differs shimmers so the child can fix it. */
+(() => {
+  const levels = [
+    { label: '1 · Flame (4–5)', n: 2, pieces: [2, 2], shapes: false },
+    { label: '2 · Beacon (5–6)', n: 3, pieces: [3, 4], shapes: false },
+    { label: '3 · Beacon (6–7)', n: 4, pieces: [4, 5], shapes: true },
+    { label: '4 · Lighthouse (7–9)', n: 3, pieces: [3, 4], shapes: false, mirror: true },
+  ];
+  const glass = (g) => `${g.c}${g.s ? ' ' + g.s : ''}`;
+  const NAME = { y: 'yellow', b: 'blue', r: 'red', g: 'green', circ: 'circle', tri: 'triangle' };
+  const label = (g) => `${NAME[g.c]}${g.s ? ' ' + NAME[g.s] : ''} glass`;
+  const same = (a, b) => (!a && !b) || (a && b && a.c === b.c && (a.s || '') === (b.s || ''));
+
+  LL.game({
+    code: 'G27', name: 'Lantern Builder', accent: '#b48a1c',
+    guide: { name: 'Hazel the hedgehog', kind: 'hedgehog', color: '#8a6a52' },
+    bg: 'linear-gradient(180deg,#fbefd2 0%,#f4dfb8 60%,#e9cc9a 100%)',
+    reward: { icon: '🏮' }, doneLine: 'What a beautiful lantern!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO09',
+    complete: ['VO08', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G27-') || k.startsWith('SH-')),
+    async levelStart(c) { await c.say('VO02', 'instruction'); await c.dragTip(); },   // Copy my lantern. Put each glass piece in the same place.
+    async round(c, i) {
+      const L = c.L, N = L.n, size = N === 4 ? 7 : N === 3 ? 9 : 12;
+      const count = L.pieces[0] + Math.floor(Math.random() * (L.pieces[1] - L.pieces[0] + 1));
+      const model = Array(N * N).fill(null);
+      LL.shuffle([...model.keys()]).slice(0, count).forEach((k) => { model[k] = { c: LL.pick(['y', 'b', 'r', 'g']), s: L.shapes ? LL.pick(['', 'circ', 'tri']) : '' }; });
+      if (L.mirror && model.every((m, k) => same(m, model[Math.floor(k / N) * N + (N - 1 - k % N)]))) { const k = model.findIndex((m, q) => !m && q % N !== Math.floor(N / 2)); model[k] = { c: 'r', s: '' }; }
+      const want = L.mirror ? model.map((_, k) => model[Math.floor(k / N) * N + (N - 1 - k % N)]) : model;
+      const mk = (cls) => c.el(`<div class="grid ${cls}" style="--n:${N};--s:${size}cqmin"></div>`);
+      const mg = mk('model'), yg = mk('mine');
+      model.forEach((m) => { const cell = c.el(`<span class="cell"></span>`); if (m) cell.innerHTML = `<span class="gl ${glass(m)}"></span>`; mg.appendChild(cell); });
+      const cells = model.map((_, k) => { const cell = c.el(`<button class="cell drop" type="button" aria-label="Cell ${k + 1}"></button>`); yg.appendChild(cell); return cell; });
+      const tray = c.el(`<div class="tray" style="--s:${size}cqmin"></div>`);
+      const pieces = LL.shuffle(want.filter(Boolean)).map((g) => { const b = c.el(`<button class="gl ${glass(g)}" type="button" aria-label="${label(g)}"></button>`); b.g = g; tray.appendChild(b); return b; });
+      const grids = c.el(`<div class="grids"></div>`); grids.append(mg, yg);
+      c.area.replaceChildren(grids, tray);
+      const ask = L.mirror ? 'VO04' : 'VO03';
+      c.setPrompt(() => c.say(ask, 'question'));
+      c.setClue(async () => { await c.say('VO05', 'instruction'); await compare(true); });
+      await c.say(ask, 'question');                                  // Where does this piece go? / … like a mirror.
+      if (i === 0) await c.hearAgainTip();
+      const at = (k) => cells[k].querySelector('.gl')?.g || null;
+      async function compare(hintOnly) {
+        const diff = cells.filter((cell, k) => !same(at(k), want[k]));
+        diff.forEach((d) => { d.classList.remove('diff'); void d.offsetWidth; d.classList.add('diff'); });
+        if (!hintOnly && diff.length) await c.say('VO06', 'retry');   // One piece is in a different place.
+        return diff.length === 0;
+      }
+      for (;;) {
+        // test hooks: where each piece belongs
+        const free = new Set(cells.map((_, k) => k).filter((k) => want[k] && !same(at(k), want[k])));
+        pieces.forEach((p) => {
+          const home = cells.indexOf(p.parentElement), placedRight = home >= 0 && same(p.g, want[home]);
+          const k = [...free].find((q) => same(want[q], p.g));
+          p.dataset.piece = '1'; p.dataset.target = !placedRight && k !== undefined ? `Cell ${k + 1}` : 'none';
+        });
+        const { piece, target } = await c.place({ pieces, targets: cells });
+        if (piece.parentElement === target) continue;
+        const old = target.querySelector('.gl');
+        const from = piece.parentElement;
+        target.appendChild(piece); c.sfx.pop();
+        if (old) { if (from.classList.contains('cell')) from.appendChild(old); else tray.appendChild(old); }
+        if (pieces.every((p) => p.parentElement.classList.contains('cell'))) {
+          let ok = false;
+          await c.busy(async () => { await c.say('VO05', 'transition'); ok = await compare(false); });   // Let's compare.
+          if (ok) {
+            await c.busy(async () => { yg.classList.add('lit'); mg.classList.add('lit'); c.sparkle(yg); c.sfx.chime(); await c.say('VO07', 'praise'); });   // Same as mine! The lantern glows.
+            return;
+          }
+        }
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

@@ -26,8 +26,10 @@ export const home = {
     'Learning Lanterns creates thoughtfully designed browser games, printables and hands-on learning experiences that help young children grow.',
   body: (h) => {
     const playSection = games.length
-      ? `<div class="grid grid-3">${games.slice(0, 6).map((g) => `<div class="reveal">${gameCard(g, h)}</div>`).join('')}</div>
-         <div class="btn-row mt-6">${button(h('explore/number-nook/'), `See all ${games.length} maths games`, { variant: 'secondary' })}</div>`
+      ? `<div class="grid grid-3">${['light-the-lanterns', 'quick-peek', 'echo-cave', 'sound-safari', 'sleepy-owl', 'shadow-shapes']
+          .map((slug) => games.find((g) => g.slug === slug)).filter(Boolean)
+          .map((g) => `<div class="reveal">${gameCard(g, h)}</div>`).join('')}</div>
+         <div class="btn-row mt-6">${button(h('explore/number-nook/'), 'All maths games', { variant: 'secondary' })}${button(h('explore/word-garden/'), 'All literacy games', { variant: 'secondary' })}${button(h('explore/'), `All ${games.length} games`, { variant: 'secondary' })}</div>`
       : comingSoonPanel({
           title: 'Our maths games are moving in',
           message:
@@ -68,8 +70,8 @@ export const home = {
       <div class="container">
         <div class="reveal">${sectionHead({
           eyebrow: 'Play and learn',
-          title: `<span id="play-title">${games.length ? 'Maths games to play today' : 'Maths games for the Number Nook'}</span>`,
-          intro: 'Our first interactive games live in the Number Nook. Friendly voices guide children through counting, comparing, recognising and writing numbers.',
+          title: `<span id="play-title">Games to play today</span>`,
+          intro: 'Free to play, with no sign-up needed. Friendly voices guide children through counting, rhymes and first sounds, puzzles, patterns and more.',
           doodle: d.star(),
         })}</div>
         ${playSection}

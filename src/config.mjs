@@ -23,9 +23,30 @@ export const site = {
   // show a "write to us" link. Never put a made-up address here.
   contactEmail: null,
 
-  // A form-handling endpoint that accepts a standard POST of form fields
-  // (for example a Formspree, Basin or Netlify Forms URL). When set, the
-  // toy-interest and school-enquiry forms appear. When null, no form is
-  // shown, so visitors never fill in a form that goes nowhere.
-  formEndpoint: null,
+  // Where the help-centre chat box and the enquiry forms send messages.
+  // '/api/message' is the function in netlify/functions/message.mjs, which
+  // forwards each message to the owner's WhatsApp. The number itself is set
+  // as an environment variable on the host (see docs/LAUNCH.md), so it never
+  // appears in the page or in this repository. Set to null to hide the chat
+  // box and the forms, for example on a host without functions.
+  messageEndpoint: process.env.LL_MESSAGE_ENDPOINT ?? '/api/message',
+
+  // A form-handling endpoint for the contact, toy-interest and school-enquiry
+  // forms. By default they go to the same place as the chat box. When null,
+  // no form is shown, so visitors never fill in a form that goes nowhere.
+  formEndpoint: process.env.LL_FORM_ENDPOINT ?? null,
+
+  // Parent accounts and progress tracking run on Supabase (supabase.com).
+  // Paste your project's URL and its public "anon" key here, after running
+  // the SQL in supabase/migrations/ (see docs/ACCOUNTS.md). The anon key is
+  // meant to be public: the database's own rules keep each family's data
+  // private. Leave both null and the account features stay switched off.
+  // LL_SUPABASE_URL / LL_SUPABASE_ANON_KEY environment variables override
+  // these at build time.
+  supabaseUrl: process.env.LL_SUPABASE_URL || null,
+  supabaseAnonKey: process.env.LL_SUPABASE_ANON_KEY || null,
 };
+
+site.formEndpoint ??= site.messageEndpoint;
+
+export const accountsEnabled = Boolean(site.supabaseUrl && site.supabaseAnonKey);

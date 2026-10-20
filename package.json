@@ -7,6 +7,10 @@
   "scripts": {
     "build": "node build.mjs",
     "preview": "node build.mjs --preview",
-    "serve": "node build.mjs && node serve.mjs"
+    "serve": "node build.mjs && node serve.mjs",
+    "test:privacy": "node tests/privacy-rules.mjs"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.45.4"
   }
 }

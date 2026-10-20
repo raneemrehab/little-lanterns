@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sleepy Owl · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.scene{position:relative;width:100%;height:100%}
+.owl{position:absolute;left:50%;top:4%;transform:translateX(-50%);width:30cqmin;height:30cqmin;pointer-events:none}
+.owl svg{width:100%;height:100%}
+.owl .lids{opacity:0;transition:opacity .3s}
+.asleep .owl .lids{opacity:1}
+.zz{position:absolute;left:62%;top:2%;font:800 5cqmin/1 var(--display);color:#fffdf8;opacity:0;transition:opacity .3s}
+.asleep .zz{opacity:1;animation:hop 1.6s ease-in-out infinite}
+.asleep{filter:saturate(.7)}
+.fly{all:unset;position:absolute;width:9cqmin;height:9cqmin;margin:-4.5cqmin;border-radius:50%;cursor:pointer;background:radial-gradient(circle,#fff7c2 0 22%,#f5d57a 38%,rgba(245,213,122,0) 70%);touch-action:manipulation}
+.fly.caught{transition:left .6s ease,top .6s ease,opacity .6s;opacity:0}
+.jar{position:absolute;right:3%;bottom:2%;width:16cqmin;height:18cqmin;border-radius:3cqmin 3cqmin 2.4cqmin 2.4cqmin;background:rgba(220,236,246,.2);border:.6cqmin solid rgba(255,253,248,.8);border-top:2cqmin solid #c99a5e;display:flex;flex-wrap:wrap-reverse;align-content:flex-start;gap:.6cqmin;padding:1cqmin}
+.jar i{width:2.6cqmin;height:2.6cqmin;border-radius:50%;background:#f5d57a;box-shadow:0 0 1.4cqmin #f5d57a}
+.state{position:absolute;left:3%;bottom:3%;font:800 3.6cqmin/1 var(--body);background:rgba(255,253,248,.9);color:#263238;padding:1.4cqmin 2.6cqmin;border-radius:999px}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Sleepy Owl (Main · Thinking Control): stop-and-think (go / no-go). Each round is one awake time and one sleep.
+   Voice: LL-LIT-G17-VO01…VO10 and the shared narrator lines. No points are ever lost. */
+(() => {
+  const levels = [
+    { label: '1 · Spark (2–3)', awake: 9000, sleep: 3500, speed: 9000, every: 1500 },
+    { label: '2 · Glow (3–4)', awake: 7000, sleep: 2800, speed: 7500, every: 1300 },
+    { label: '3 · Flame (4–5)', awake: 5000, sleep: 3500, speed: 6500, every: 1100, snore: true },
+    { label: '4 · Beacon (5–7)', awake: 5000, sleep: 5000, speed: 7000, every: 1200, opposite: true },
+  ];
+  const lids = '<g class="lids"><path d="M31 41 Q40 36 49 41 Q40 50 31 41Z" fill="#b08a5a"/><path d="M51 41 Q60 36 69 41 Q60 50 51 41Z" fill="#b08a5a"/><path d="M32 42 Q40 47 48 42 M52 42 Q60 47 68 42" stroke="#263238" stroke-width="2" fill="none"/></g>';
+  let caughtCount = 0;
+
+  LL.game({
+    code: 'G17', name: 'Sleepy Owl', accent: '#d06a52', dark: true,
+    guide: { name: 'Ollie the owl', kind: 'owl', color: '#b08a5a' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #34406e 0%, #252e52 60%, #1a2040 100%)',
+    reward: { icon: '🫙' }, doneLine: 'Your jar is glowing!',
+    levels, rounds: 5, intro: ['VO01'], goodbye: 'VO10',
+    complete: ['VO09', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G17-') || k.startsWith('SH-')),
+    async levelStart(c) {
+      caughtCount = 0;
+      await c.say('VO02', 'instruction');           // When my eyes are open, catch the fireflies. When I'm asleep, keep still.
+      if (c.L.opposite) await c.say('VO05', 'instruction');   // It's opposite day! Catch them when I'm asleep.
+    },
+    async round(c, i) {
+      const L = c.L;
+      c.stage.querySelector('#guide').style.visibility = 'hidden';
+      const scene = c.el(`<div class="scene"><div class="owl">${window.critter({ name: 'Ollie the owl', kind: 'owl', color: '#b08a5a' }).replace('</svg>', lids + '</svg>')}</div><span class="zz" aria-hidden="true">z z z</span><div class="jar" aria-label="Firefly jar"></div><span class="state"></span></div>`);
+      c.area.replaceChildren(scene);
+      const jar = scene.querySelector('.jar'), state = scene.querySelector('.state');
+      for (let k = 0; k < caughtCount; k++) jar.appendChild(document.createElement('i'));
+      let asleep = false, tappedThisSleep = false, spawnT = 0, alive = true;
+      const flies = new Set();
+      const goTime = () => (L.opposite ? asleep : !asleep);
+      // Fireflies drift across the sky; tapping catches one when it's catching time.
+      function spawn() {
+        const f = c.el(`<button class="fly" type="button" aria-label="Firefly"></button>`);
+        const y0 = 30 + Math.random() * 50, y1 = 25 + Math.random() * 55, ltr = Math.random() < 0.5;
+        f.style.left = (ltr ? -5 : 105) + '%'; f.style.top = y0 + '%';
+        scene.appendChild(f); flies.add(f);
+        const anim = f.animate([{ left: (ltr ? -5 : 105) + '%', top: y0 + '%' }, { left: (ltr ? 105 : -5) + '%', top: y1 + '%' }], { duration: L.speed * (0.8 + Math.random() * 0.4), easing: 'linear' });
+        anim.onfinish = () => { flies.delete(f); f.remove(); };
+        f.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          if (!alive || !c.alive()) return;
+          if (goTime()) {
+            anim.pause(); flies.delete(f);
+            const sr = scene.getBoundingClientRect(), jr = jar.getBoundingClientRect(), fr = f.getBoundingClientRect();
+            f.style.left = (fr.left - sr.left + fr.width / 2) / sr.width * 100 + '%'; f.style.top = (fr.top - sr.top + fr.height / 2) / sr.height * 100 + '%';
+            anim.cancel();
+            requestAnimationFrame(() => { f.classList.add('caught'); f.style.left = (jr.left - sr.left + jr.width / 2) / sr.width * 100 + '%'; f.style.top = (jr.top - sr.top + jr.height / 2) / sr.height * 100 + '%'; });
+            setTimeout(() => { f.remove(); jar.appendChild(document.createElement('i')); }, 600);
+            caughtCount++; c.sfx.pop();
+            if (caughtCount % 4 === 1) c.say('VO06', 'praise').catch(() => {});   // Caught one! (not every time, so it stays calm)
+          } else {
+            tappedThisSleep = true; c.sfx.soft();
+            c.restart(scene.querySelector('.owl'), 'wiggle');
+            if (!L.opposite) c.say('VO08', 'retry').catch(() => {});          // Shh, Ollie is sleeping.
+          }
+        });
+        f.dataset.ok = '1';
+      }
+      const tick = setInterval(() => { if (c.alive() && alive && Date.now() > spawnT) { spawnT = Date.now() + L.every * (0.7 + Math.random() * 0.6); spawn(); } }, 200);
+      const snore = () => { if (L.snore) { c.sfx.tone(90, 0, 0.7, 0.05, 'triangle'); c.sfx.tone(70, 0.8, 0.7, 0.04, 'triangle'); } };
+      try {
+        // Awake
+        asleep = false; scene.classList.remove('asleep'); state.textContent = L.opposite ? 'Awake: keep still' : 'Awake: catch!';
+        tappedThisSleep = false;
+        await c.say('VO03', 'transition');                         // I'm awake!
+        await c.wait(L.awake);
+        if (L.opposite && !tappedThisSleep) await c.busy(() => c.say('VO07', 'praise'));   // opposite day: waited while awake
+        // Asleep
+        asleep = true; tappedThisSleep = false; scene.classList.add('asleep'); state.textContent = L.opposite ? 'Asleep: catch!' : 'Asleep: keep still';
+        snore();
+        await c.say('VO04', 'transition');                         // Yawn… zzz.
+        const snoreT = setInterval(snore, 2200);
+        try { await c.wait(L.sleep); } finally { clearInterval(snoreT); }
+        alive = false;
+        if (!tappedThisSleep && !L.opposite) await c.busy(() => c.say('VO07', 'praise'));   // You waited so well!
+      } finally {
+        alive = false; clearInterval(tick); flies.forEach((f) => f.remove());
+        c.stage.querySelector('#guide').style.visibility = '';
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

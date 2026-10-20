@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sound Safari · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.tuft{background:#fffaf0;border-bottom:1.6cqmin solid #9fbf86}
+.thumbs .opt{min-width:16cqmin;min-height:14cqmin;font-size:9cqmin}
+.jeep{display:flex;align-items:center;gap:1cqmin;font-size:4.4cqmin;min-height:7cqmin;background:rgba(255,253,248,.7);padding:1cqmin 2cqmin;border-radius:999px}
+.jeep .car{font-size:6cqmin}
+.baskets{display:flex;gap:6cqmin}
+.basket{all:unset;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1cqmin;width:28cqmin;min-height:20cqmin;padding:1.6cqmin;border-radius:2cqmin 2cqmin 7cqmin 7cqmin;background:repeating-linear-gradient(90deg,#d9b07a 0 2cqmin,#c99a5e 2cqmin 4cqmin);cursor:pointer}
+.basket .key{font-size:7cqmin;background:#fffdf8;border-radius:50%;width:11cqmin;height:11cqmin;display:grid;place-items:center}
+.basket .in{display:flex;flex-wrap:wrap;gap:.6cqmin;justify-content:center;font-size:5cqmin}
+.sm .opt{min-width:13cqmin;min-height:13cqmin}
+.sm .pic .em{font-size:8cqmin}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Sound Safari (Literacy · Unit 2): first sounds. Voice: LL-LIT-G02-VO01…VO15, shared narrator lines and word
+   recordings (LL-LIT-WD-*). The letter-sound recordings (LL-LIT-PH-*) are not supplied yet, so after the second
+   guess Ziggy says each picture's word again rather than stretching its first sound. */
+(() => {
+  const PIC = window.LL_PICS;
+  const FIRST = { s: ['sun', 'sock'], m: ['moon', 'mouse', 'map'], b: ['bus', 'bed', 'ball'], p: ['pig', 'pen'], d: ['dog', 'duck'], t: ['tap', 'tent'],
+    n: ['net', 'nut'], f: ['fan', 'fox', 'fish'], sh: ['ship', 'shell'], th: ['thumb'], h: ['hat', 'hen'], l: ['log', 'leg'], c: ['cat', 'cup'] };
+  const soundOf = (w) => Object.keys(FIRST).find((k) => FIRST[k].includes(w));
+  const pic = (w) => `<span class="pic"><span class="em">${PIC[w]}</span></span>`;
+  const levels = [
+    { label: '1 · Glow (3–4)', mode: 'same' },
+    { label: '2 · Glow (3–4)', mode: 'find', n: 3, sounds: ['s', 'm', 'b', 'f', 'n', 'l'] },
+    { label: '3 · Flame (4–5)', mode: 'find', n: 4, close: true },
+    { label: '4 · Flame (4–5)', mode: 'sort' },
+  ];
+  const PRAISE = ['VO08', 'VO09'];
+  let pi = 0, jeep = [];
+
+  LL.game({
+    code: 'G02', name: 'Sound Safari', accent: '#7d6cc0',
+    guide: { name: 'Ziggy the zebra', kind: 'zebra', color: '#f4f1ea' },
+    bg: 'linear-gradient(180deg,#fbe7b8 0%,#f3d58f 45%,#c9d98f 100%)',
+    reward: { icon: '🚙' }, doneLine: 'Your jeep is full of sounds!',
+    levels, rounds: 5, intro: ['VO01'], idle: 'VO12', goodbye: 'VO15',
+    complete: ['VO14', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G02-') || k.startsWith('SH-') || k.startsWith('WD-')),
+    async levelStart(c) {
+      jeep = [];
+      if (c.firstTime('demo')) {                                     // Listen. Sun… sock. Sss, sss. They start the same!
+        c.area.replaceChildren(c.el(`<div class="row"><div class="opt tuft">${pic('sun')}</div><div class="opt tuft">${pic('sock')}</div></div>`));
+        await c.say('VO03', 'instruction');
+      }
+      if (c.L.mode === 'find') await c.say('VO02', 'instruction');   // I'll say a word. You find the one that starts with the same sound.
+    },
+    async between(c) { await c.say('VO13', 'transition'); },          // Let's drive to the next spot!
+    async round(c, i) {
+      const L = c.L;
+      const jeepEl = c.el(`<div class="jeep" aria-label="Jeep"><span class="car">🚙</span>${jeep.map((w) => PIC[w]).join('')}</div>`);
+      if (L.mode === 'same') return sameRound(c, i, jeepEl);
+      if (L.mode === 'sort') return sortRound(c, i, jeepEl);
+      // Find the match
+      const pool = L.close ? (i % 2 ? ['f', 'th'] : ['s', 'sh']) : LL.shuffle(L.sounds).slice(0, L.n);
+      const tsound = pool[0];
+      const [target, answer] = FIRST[tsound].length > 1 ? LL.shuffle(FIRST[tsound]).slice(0, 2) : [FIRST[tsound][0], FIRST[tsound][0]];
+      let others = pool.slice(1).map((s) => LL.pick(FIRST[s]));
+      if (L.close) others.push(...LL.shuffle(Object.keys(FIRST).filter((s) => !pool.includes(s))).slice(0, L.n - 2).map((s) => LL.pick(FIRST[s])));
+      others = others.slice(0, L.n - 1);
+      const top = c.el(`<div class="target tuft">${pic(target)}</div>`);
+      const row = c.el(`<div class="row"></div>`);
+      const items = LL.shuffle([answer, ...others]).map((w) => { const b = c.el(`<button class="opt tuft" type="button" aria-label="${w}">${pic(w)}</button>`); row.appendChild(b); return { el: b, ok: w === answer && soundOf(w) === tsound, w }; });
+      if (answer === target) top.style.visibility = 'hidden';
+      c.area.replaceChildren(top, row, jeepEl);
+      const prompt = async () => { await c.say('VO05', 'transition'); await c.say('WD-' + target, 'question'); };   // Which one starts like this? … sun
+      c.setPrompt(prompt);
+      c.setClue(async () => { await c.say('VO07', 'instruction'); await c.say('WD-' + target, 'count'); });   // Listen to the very first sound.
+      await prompt();
+      if (i === 0) await c.hearAgainTip();
+      await c.choice({
+        items,
+        onTap: (it) => c.busy(() => c.say('WD-' + it.w, 'count')),   // every picture says its name
+        miss2: async () => { await c.say('VO11', 'retry'); for (const it of items) { if (!it.gone) { c.restart(it.el, 'bounce'); await c.say('WD-' + it.w, 'count'); } } },
+        miss3: 'SH-VO07',
+      });
+      await c.busy(async () => {
+        await c.say('WD-' + target, 'count'); await c.say('WD-' + answer, 'count');   // Ziggy repeats both words
+        jeep.push(answer);
+        await c.say(PRAISE[pi++ % 2], 'praise');
+      });
+    },
+  });
+
+  // Level 1: same or different first sound? Thumbs up or thumbs down.
+  async function sameRound(c, i, jeepEl) {
+    const sameStart = i % 2 === 0 ? Math.random() < 0.7 : Math.random() < 0.4;
+    const s1 = LL.pick(['s', 'm', 'b', 'f', 'p', 'd', 'h', 'c'].filter((s) => FIRST[s].length > 1));
+    const a = FIRST[s1][0], b = sameStart ? FIRST[s1][1] : LL.pick(FIRST[LL.pick(Object.keys(FIRST).filter((s) => s !== s1 && s !== 'th' && s !== 'sh'))]);
+    const pair = c.el(`<div class="row"><div class="opt tuft">${pic(a)}</div><div class="opt tuft">${pic(b)}</div></div>`);
+    const row = c.el(`<div class="row thumbs"></div>`);
+    const up = c.el(`<button class="opt" type="button" aria-label="They start the same">👍</button>`);
+    const down = c.el(`<button class="opt" type="button" aria-label="They start differently">👎</button>`);
+    row.append(up, down);
+    c.area.replaceChildren(pair, row, jeepEl);
+    const prompt = async () => { await c.say('WD-' + a, 'count'); await c.say('WD-' + b, 'count'); await c.say('VO04', 'question'); };   // Do they start the same? Tap the thumb if they do.
+    c.setPrompt(prompt);
+    c.setClue(async () => { await c.say('VO07', 'instruction'); await c.say('WD-' + a, 'count'); await c.say('WD-' + b, 'count'); });
+    await prompt();
+    if (i === 0) await c.hearAgainTip();
+    await c.choice({ items: [{ el: up, ok: sameStart }, { el: down, ok: !sameStart }], reduce: false,
+      onMiss: async () => { await c.say('WD-' + a, 'count'); await c.say('WD-' + b, 'count'); } });
+    await c.busy(async () => { jeep.push(a); await c.say(sameStart ? 'VO08' : 'VO10', 'praise'); });   // Same first sound! / Yes, they start differently.
+  }
+
+  // Level 4: sort six pictures into two baskets by first sound.
+  async function sortRound(c, i, jeepEl) {
+    const [s1, s2] = LL.shuffle(['s', 'm', 'b', 'f', 'p', 'd', 'h', 'c', 'n', 'l', 't']);
+    const keyA = FIRST[s1][0], keyB = FIRST[s2][0];
+    const restA = FIRST[s1].slice(1), restB = FIRST[s2].slice(1);
+    const words = LL.shuffle([...restA, ...restB]);
+    const bA = c.el(`<button class="basket drop" type="button" aria-label="${keyA} basket"><span class="key">${PIC[keyA]}</span><span class="in"></span></button>`);
+    const bB = c.el(`<button class="basket drop" type="button" aria-label="${keyB} basket"><span class="key">${PIC[keyB]}</span><span class="in"></span></button>`);
+    const baskets = c.el(`<div class="baskets"></div>`); baskets.append(bA, bB);
+    const row = c.el(`<div class="row sm"></div>`);
+    const pieces = words.map((w) => { const p = c.el(`<button class="opt tuft" type="button" aria-label="${w}">${pic(w)}</button>`); p.dataset.w = w; p.dataset.piece = '1'; p.dataset.target = (restA.includes(w) ? keyA : keyB) + ' basket'; row.appendChild(p); return p; });
+    c.area.replaceChildren(baskets, row);
+    const prompt = async () => { await c.say('VO06', 'transition'); await c.say('WD-' + keyA, 'count'); await c.say('WD-' + keyB, 'question'); };   // Put each picture in the right basket.
+    c.setPrompt(prompt);
+    c.setClue(async () => { await c.say('VO07', 'instruction'); await c.say('WD-' + keyA, 'count'); await c.say('WD-' + keyB, 'count'); });
+    await prompt();
+    if (i === 0) await c.dragTip();
+    let misses = 0;
+    while (pieces.some((p) => p.isConnected && p.parentElement === row)) {
+      const live = pieces.filter((p) => p.parentElement === row);
+      const { piece, target } = await c.place({ pieces: live, targets: [bA, bB], onSelect: (p) => c.say('WD-' + p.dataset.w, 'count').catch(() => {}) });
+      const w = piece.dataset.w, right = restA.includes(w) ? bA : bB;
+      if (target === right) {
+        await c.busy(async () => { target.querySelector('.in').insertAdjacentHTML('beforeend', PIC[w]); piece.remove(); c.sfx.pop(); await c.say('WD-' + w, 'count'); });
+        continue;
+      }
+      misses++;
+      await c.busy(async () => {
+        c.restart(piece, 'wiggle'); c.sfx.soft();
+        await c.say(misses % 2 ? 'SH-VO01' : 'VO11', 'retry');
+        await c.say('WD-' + (right === bA ? keyA : keyB), 'count'); await c.say('WD-' + w, 'count');
+      });
+    }
+    await c.busy(async () => { jeep.push(keyA, keyB); c.sfx.chime(); await c.say(PRAISE[pi++ % 2], 'praise'); });
+  }
+})();
+</script>
+</body>
+</html>

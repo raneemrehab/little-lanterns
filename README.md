@@ -39,6 +39,8 @@ npm run serve     # builds, then serves dist/ at http://localhost:4321 (with the
 npm run preview   # builds preview/, whose links work when opened straight from disk
 ```
 
+**To launch, see [docs/LAUNCH.md](docs/LAUNCH.md)** (Netlify, the WhatsApp help chat and optional family accounts).
+
 Upload the contents of `dist/` to any static host. The games are copied into `dist/games/` unchanged, so every
 game keeps its own address (`/games/duck-pond/` and so on). Each game also gets a branded play page in the
 Number Nook (`/explore/number-nook/duck-pond/`) that embeds it with an iframe, as the game READMEs recommend.
@@ -48,8 +50,10 @@ use it automatically.
 | Where | What to edit |
 | --- | --- |
 | `src/config.mjs` | Site URL, base path, a real contact email, and a form endpoint. Forms and email links stay hidden until these are set. |
-| `src/data/games.mjs` | The list of games shown on the site. Add a game here after adding its folder to `games/`. |
+| `src/data/games.mjs` | The list of games shown on the site: the maths games in `games/`, the literacy and thinking games in `literacy/play/`, and the designed games shown as "Coming soon". |
+| `netlify/functions/message.mjs` | Sends help-chat messages and forms to WhatsApp. The number is an environment variable, never in the code. |
 | `src/data/studios.mjs` | The six learning studios and their wording. |
 | `src/data/resources.mjs` | Printables (none yet) and hands-on toy concepts. |
 | `src/pages/` | Page content. `src/components/` holds the shared header, footer, cards, forms and SVG doodles. |
 | `src/assets/` | Styles, scripts and images. `src/assets/img/games/` holds real screenshots of each game's start screen. |
+| `supabase/`, `docs/ACCOUNTS.md` | Family accounts, child profiles, the progress dashboard and activity tracking. These stay switched off until a Supabase project is connected: see [docs/ACCOUNTS.md](docs/ACCOUNTS.md). |

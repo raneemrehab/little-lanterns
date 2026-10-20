@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Echo Cave · Learning Lanterns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.stone{border-radius:50% 46% 52% 44%/48% 52% 46% 50%;background:#d9d2ee}
+.target.stone{background:#efe9fb;min-width:20cqmin;min-height:20cqmin}
+.stones{gap:3.5cqmin}
+.drum{all:unset;cursor:pointer;width:34cqmin;height:34cqmin;border-radius:50%;display:grid;place-items:center;font-size:20cqmin;background:radial-gradient(circle at 50% 40%,#f3d9b0,#c99a5e 70%);box-shadow:0 1.4cqmin 0 #8a6a52,0 0 0 1.2cqmin rgba(255,253,248,.25);touch-action:none}
+.drum.ready:active,.drum.hit{transform:translateY(.8cqmin);box-shadow:0 .6cqmin 0 #8a6a52,0 0 6cqmin 2cqmin rgba(245,213,122,.7)}
+.drum.beat{box-shadow:0 1.4cqmin 0 #8a6a52,0 0 7cqmin 3cqmin rgba(245,213,122,.9)}
+.taps{display:flex;gap:2cqmin;min-height:5cqmin}
+.taps i{width:5cqmin;height:5cqmin;border-radius:50%;background:var(--g-butter);box-shadow:0 0 2cqmin rgba(245,213,122,.9);animation:pop .25s ease both}
+.dotsn{display:flex;gap:1cqmin;justify-content:center}
+.dotsn i{width:3.4cqmin;height:3.4cqmin;border-radius:50%;background:#5b4e8f}
+.lvls{grid-template-columns:1fr 1fr}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Echo Cave (Literacy · Unit 1): rhyme and syllables, pictures only.
+   Voice: Pip's own lines LL-LIT-G01-VO01…VO41 (Echo Cave uses no shared narrator lines), plus word recordings
+   LL-LIT-WD-*. The dedicated Echo Cave word recordings (ECW / ECB) are not supplied yet, so the rhyme and beat words
+   come from the recorded word bank (same voice). There is no recorded four-beat word, so words go up to three beats. */
+(() => {
+  const PIC = window.LL_PICS;
+  const pic = (w) => `<span class="pic"><span class="em">${PIC[w]}</span></span>`;
+
+  // Rhyme families, all from recorded words.
+  const FAM = [['hat', 'cat', 'bat'], ['dog', 'log', 'frog'], ['pen', 'hen'], ['boat', 'coat', 'goat'], ['rain', 'train'],
+    ['sun', 'run'], ['light', 'night'], ['ship', 'chip'], ['pin', 'chin']];
+  const OTHER = ['moon', 'fish', 'ball', 'bus', 'duck', 'cup', 'drum', 'mouse', 'milk', 'tent', 'kite', 'map', 'fox', 'sock', 'leg', 'nut', 'thumb', 'shell', 'crab', 'pig'];
+  // Level 3: a near-rhyme sharing the start or middle of the word, plus a picture that is clearly different.
+  const NEAR = { hat: ['hot', 'cap'], cat: ['cap', 'cot'], dog: ['duck'], log: ['leg'], pen: ['pin', 'pig'], hen: ['hat'], boat: ['bus'],
+    coat: ['cot', 'cup'], rain: ['run'], sun: ['sock'], ship: ['shell', 'shop'], pin: ['pen', 'pig'], light: ['leg'], night: ['nut', 'net'] };
+  const BEATS = { 1: ['drum', 'cat', 'sun', 'fish', 'moon', 'frog'], 2: ['insect', 'tiptoe', 'jumping', 'unlock', 'grumpy'], 3: ['octopus', 'enormous', 'gigantic'] };
+  const BEAT_LINE = { 1: 'VO27', 2: 'VO28', 3: 'VO29', 4: 'VO30' };
+  const PRAISE = ['VO11', 'VO12', 'VO13', 'VO14'];
+  const sylOf = (w) => +Object.keys(BEATS).find((k) => BEATS[k].includes(w));
+
+  const levels = [
+    { label: 'Rhyme · 1 Spark (2–3)', mode: 'rhyme', n: 2 },
+    { label: 'Beat drum · 1 Spark (2–3)', mode: 'drum', along: true, max: 2 },
+    { label: 'Rhyme · 2 Glow (3–4)', mode: 'rhyme', n: 3 },
+    { label: 'Beat drum · 2 Glow (3–4)', mode: 'drum', max: 3 },
+    { label: 'Rhyme · 3 Flame (4–5)', mode: 'rhyme', n: 4, near: true },
+    { label: 'Beat drum · 3 Flame (4–5)', mode: 'drum', max: 3 },
+    { label: 'Odd one out · 4 Flame (4–5)', mode: 'odd' },
+    { label: 'How many beats? · 4 Flame (4–5)', mode: 'count' },
+  ];
+  let plan = [], praiseI = 0;
+
+  function makePlan(L) {
+    if (L.mode === 'drum' || L.mode === 'count') {
+      const pool = Object.keys(BEATS).filter((k) => k <= (L.max || 3)).flatMap((k) => BEATS[k]);
+      let p; do { p = LL.shuffle(pool).slice(0, 5); } while (new Set(p.map(sylOf)).size < Math.min(3, L.max || 3));
+      return p;
+    }
+    const fams = LL.shuffle(FAM.filter((f) => !L.near || f.some((w) => NEAR[w])));
+    return fams.slice(0, 5);
+  }
+
+  const game = LL.game({
+    code: 'G01', name: 'Echo Cave', accent: '#7d6cc0', dark: true,
+    guide: { name: 'Pip the bat', kind: 'bat', color: '#8f80c9' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #5b4e8f 0%, #3e3570 55%, #2c2754 100%)',
+    reward: { icon: '💎' }, doneLine: 'You did it! The cave is glowing!',
+    levels, rounds: 5,
+    intro: ['VO01', 'VO02', 'VO04'], tapLevel: false,
+    restLine: 'VO37', backLine: 'VO38', goodbye: 'VO41',
+    complete: ['VO39', 'VO40'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G01-') || k.startsWith('WD-')),
+
+    async levelStart(c) {
+      plan = makePlan(c.L);
+      await c.say('VO03', 'transition');                         // Let's play!
+      if (c.L.mode === 'rhyme' || c.L.mode === 'odd') {
+        if (c.firstTime('rhyme')) {                              // Rhyme Stones, first time
+          await c.say('VO05', 'instruction');
+          const demo = c.el(`<div class="row stones"><div class="opt stone">${pic('hat')}</div><div class="opt stone">${pic('cat')}</div></div>`);
+          c.area.replaceChildren(demo);
+          await c.say('VO06', 'instruction');                    // Listen: hat… cat. They rhyme!
+        }
+      } else if (c.firstTime('drum')) {
+        await c.say('VO22', 'transition');                       // Let's play the beat drum!
+        await c.say('VO23', 'instruction');                      // Tap the drum for every beat.
+      }
+    },
+
+    async round(c, i) {
+      const L = c.L;
+      if (L.mode === 'rhyme') return rhymeRound(c, i, plan[i]);
+      if (L.mode === 'odd') return oddRound(c, i, plan[i]);
+      if (L.mode === 'count') return countRound(c, i, plan[i]);
+      return drumRound(c, i, plan[i]);
+    },
+  });
+
+  /* ---------- Rhyme Stones ---------- */
+  async function rhymeRound(c, i, fam) {
+    const L = c.L;
+    const [target, answer] = LL.shuffle(fam);
+    let others;
+    if (L.near) {
+      const near = (NEAR[target] || []).filter((w) => !fam.includes(w));
+      others = [...LL.shuffle(near).slice(0, 2), ...LL.shuffle(OTHER.filter((w) => !fam.includes(w) && !near.includes(w)))].slice(0, L.n - 1);
+    } else others = LL.shuffle(OTHER.filter((w) => !fam.includes(w))).slice(0, L.n - 1);
+    const words = LL.shuffle([answer, ...others]);
+    const top = c.el(`<div class="target stone" aria-label="Pip's word">${pic(target)}</div>`);
+    const row = c.el(`<div class="row stones"></div>`);
+    const items = words.map((w) => { const b = c.el(`<button class="opt stone" type="button" aria-label="${w}">${pic(w)}</button>`); row.appendChild(b); return { el: b, ok: w === answer, w }; });
+    c.area.replaceChildren(top, row);
+
+    const prompt = async () => { await c.say('VO08', 'transition'); await c.say('WD-' + target, 'question'); };
+    await c.say('VO07', 'transition');                           // Listen to my word. Find the one that rhymes.
+    await c.say('WD-' + target, 'question');
+    if (i === 0) await c.say('VO10', 'instruction');             // Tap a stone to hear its name. (first round only)
+    c.setPrompt(prompt);
+    c.setClue(async () => { await c.say('VO33', 'instruction'); await c.say('WD-' + target, 'question'); });
+
+    let retryI = 0;
+    await c.choice({
+      items, idle: 'VO35',
+      onTap: (it) => c.busy(() => c.say('WD-' + it.w, 'count')),  // every stone says its name
+      miss1: async () => {
+        await c.say(retryI++ % 2 ? 'VO17' : 'VO16', 'retry');
+        await c.say('VO19', 'transition');                        // Listen to these two.
+      },
+      miss2: async () => { await c.say('VO18', 'transition'); if (items.filter((x) => !x.gone).length > 2) await c.say('VO20', 'retry'); },
+      miss3: async () => { await c.say('VO21', 'transition'); await c.say('WD-' + answer, 'count'); },
+      onMiss: async (n, it) => {
+        if (n === 1) { await c.say('WD-' + target, 'count'); await c.say('WD-' + it.w, 'count'); await c.say('VO08', 'question'); }
+      },
+    });
+    await c.busy(async () => {
+      await c.wait(300);
+      await c.say('WD-' + target, 'count'); await c.say('WD-' + answer, 'count');   // the two words echo
+      await c.say(PRAISE[praiseI++ % PRAISE.length], 'praise');
+    });
+  }
+
+  /* ---------- Odd one out (Level 4) ---------- */
+  async function oddRound(c, i, fam) {
+    const pool = fam.length >= 3 ? fam : [...fam];
+    const odd = LL.pick(OTHER.filter((w) => !fam.includes(w)));
+    const rhy = LL.shuffle(pool).slice(0, Math.min(3, pool.length));
+    const words = LL.shuffle([...rhy, odd]);
+    const row = c.el(`<div class="row stones"></div>`);
+    const items = words.map((w) => { const b = c.el(`<button class="opt stone" type="button" aria-label="${w}">${pic(w)}</button>`); row.appendChild(b); return { el: b, ok: w === odd, w }; });
+    c.area.replaceChildren(row);
+    const sayAll = async () => { for (const it of items) { c.restart(it.el, 'bounce'); await c.say('WD-' + it.w, 'count'); } };
+    await c.say('VO09', 'transition');                            // Which one doesn't rhyme?
+    await sayAll();
+    if (i === 0) await c.say('VO10', 'instruction');
+    c.setPrompt(async () => { await c.say('VO09', 'transition'); await sayAll(); });
+    c.setClue(async () => { await c.say('VO33', 'instruction'); await sayAll(); });
+    let retryI = 0;
+    await c.choice({
+      items, idle: 'VO35', reduce: false,
+      onTap: (it) => c.busy(() => c.say('WD-' + it.w, 'count')),
+      miss1: async () => { await c.say(retryI++ % 2 ? 'VO17' : 'VO16', 'retry'); },
+      miss2: async () => { await c.say('VO18', 'transition'); },
+      miss3: async () => { await c.say('VO21', 'transition'); for (const w of rhy.slice(0, 2)) await c.say('WD-' + w, 'count'); },
+      onMiss: async (n) => { if (n === 1) await sayAll(); },
+    });
+    await c.busy(() => c.say('VO15', 'praise'));                  // That one doesn't rhyme. You found the odd one out!
+  }
+
+  /* ---------- Beat Drum ---------- */
+  function drumUI(c, word) {
+    const top = c.el(`<div class="target stone">${pic(word)}</div>`);
+    const drum = c.el(`<button class="drum" type="button" aria-label="Drum">🥁</button>`);
+    const taps = c.el(`<div class="taps" aria-hidden="true"></div>`);
+    c.area.replaceChildren(top, drum, taps);
+    return { drum, taps };
+  }
+  // Pip says the word, then the drum glows once per beat.
+  async function showBeats(c, drum, n, gap = 650) {
+    for (let k = 0; k < n; k++) { drum.classList.add('beat'); c.sfx.drum(); await c.wait(280); drum.classList.remove('beat'); await c.wait(gap - 280); }
+  }
+  // Collect drum taps until the child stops tapping for a moment (LL_VOICE_TIMING has no say here: this is the
+  // child's own time, so it is measured from their last tap, never from a fixed countdown).
+  function collectTaps(c, drum, taps, settleMs = 1800) {
+    return new Promise((resolve, reject) => {
+      let n = 0, timer = 0, idleTimer = 0;
+      taps.innerHTML = '';
+      const hit = (e) => {
+        e.preventDefault(); n++; c.sfx.drum(); c.restart(drum, 'hit'); taps.appendChild(document.createElement('i'));
+        clearTimeout(timer); timer = setTimeout(done, settleMs);
+      };
+      const done = () => { drum.removeEventListener('pointerdown', hit); drum.classList.remove('ready'); clearInterval(idleTimer); resolve(n); };
+      drum.classList.add('ready'); drum.addEventListener('pointerdown', hit);
+      let since = Date.now(), spoken = 0;
+      idleTimer = setInterval(async () => {
+        if (!c.alive()) { clearTimeout(timer); drum.removeEventListener('pointerdown', hit); clearInterval(idleTimer); reject(LL.CANCEL); return; }
+        if (n) return;
+        const idle = Date.now() - since;
+        if (idle > window.LL_VOICE_TIMING.visualNudgeMs * (1 + spoken) && idle > 4000) c.restart(drum, 'wiggle');
+        if (idle > window.LL_VOICE_TIMING.spokenNudgeMs && spoken < window.LL_VOICE_TIMING.maxSpokenNudges && !window.LLVoice.busy()) {
+          spoken++; since = Date.now(); try { await c.say('VO36', 'question'); } catch (e) {}
+        }
+      }, 500);
+    });
+  }
+
+  async function drumRound(c, i, word) {
+    const n = sylOf(word);
+    const { drum, taps } = drumUI(c, word);
+    drum.dataset.beats = n;                                       // used by the automated tests
+    const prompt = async () => { await c.say('VO24', 'transition'); await c.say('WD-' + word, 'question'); };
+    c.setPrompt(prompt);
+    c.setClue(async () => { await c.say('VO34', 'instruction'); await c.say('WD-' + word, 'count'); await showBeats(c, drum, n, 900); });
+    if (c.L.along) {
+      // Level 1: tap along as the drum glows; every tap is welcome.
+      await c.say('VO25', 'transition');                           // Tap along with me!
+      await c.say('WD-' + word, 'count');
+      drum.classList.add('ready');
+      const along = (e) => { e.preventDefault(); c.sfx.drum(); c.restart(drum, 'hit'); taps.appendChild(document.createElement('i')); };
+      drum.addEventListener('pointerdown', along);
+      try { await c.wait(400); for (let r = 0; r < 2; r++) { await showBeats(c, drum, n, 900); await c.wait(700); } }
+      finally { drum.removeEventListener('pointerdown', along); drum.classList.remove('ready'); }
+      await c.busy(async () => { await c.say(BEAT_LINE[n], 'praise'); await c.say('VO31', 'praise'); });
+      return;
+    }
+    await prompt();
+    let tries = 0;
+    for (;;) {
+      const got = await collectTaps(c, drum, taps);
+      if (got === n) break;
+      tries++;
+      await c.busy(async () => {
+        await c.say('VO32', 'instruction');                         // Let's clap it together, slowly.
+        await c.say('WD-' + word, 'count');
+        await showBeats(c, drum, n, 950);
+        if (tries >= 2) await c.say(BEAT_LINE[n], 'instruction');
+        await c.say('VO24', 'question');                             // Say it with me, and tap.
+      });
+    }
+    await c.busy(async () => { c.sparkle(drum); await c.say(BEAT_LINE[n], 'praise'); await c.say('VO31', 'praise'); });
+  }
+
+  /* ---------- How many beats? (Level 4) ---------- */
+  async function countRound(c, i, word) {
+    const n = sylOf(word);
+    const top = c.el(`<div class="target stone">${pic(word)}</div>`);
+    const row = c.el(`<div class="row stones"></div>`);
+    const items = [1, 2, 3, 4].map((k) => { const b = c.el(`<button class="opt stone" type="button" aria-label="${k}"><span class="dotsn">${'<i></i>'.repeat(k)}</span></button>`); row.appendChild(b); return { el: b, ok: k === n, k }; });
+    c.area.replaceChildren(top, row);
+    const prompt = async () => { await c.say('WD-' + word, 'transition'); await c.say('VO26', 'question'); };
+    c.setPrompt(prompt);
+    c.setClue(async () => { await c.say('VO34', 'instruction'); await c.say('WD-' + word, 'count'); });
+    await prompt();
+    await c.choice({
+      items, idle: 'VO36',
+      miss1: 'VO16', miss2: async () => { await c.say('VO18', 'transition'); await c.say('VO20', 'retry'); },
+      miss3: async () => { await c.say('VO32', 'instruction'); },
+      onMiss: async (m) => { if (m >= 1) { await c.say('WD-' + word, 'count'); await c.say('VO26', 'question'); } },
+    });
+    await c.busy(async () => { await c.say(BEAT_LINE[n], 'praise'); await c.say('VO31', 'praise'); });
+  }
+})();
+</script>
+</body>
+</html>
