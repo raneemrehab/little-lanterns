@@ -117,14 +117,24 @@
     const slots = c.el(`<div class="string mine"></div>`);
     for (let k = 0; k < 6; k++) slots.insertAdjacentHTML('beforeend', '<span class="lamp q">?</span>');
     const row = c.el(`<div class="row choices"></div>`);
-    const pal = ['r', 'y', 'b', 'g'].map((col) => { const b = c.el(`<button class="opt" type="button" aria-label="${NAME[col]} lantern">${lamp({ c: col })}</button>`); b.dataset.ok = '1'; row.appendChild(b); return [b, col]; });
+    const pal = ['r', 'y', 'b', 'g'].map((col) => { const b = c.el(`<button class="opt" type="button" aria-label="${NAME[col]} lantern">${lamp({ c: col })}</button>`); row.appendChild(b); return [b, col]; });
     c.area.replaceChildren(slots, row);
     c.setPrompt(() => c.say('VO05', 'question'));
     await c.say('VO05', 'question');                                 // Now make your own pattern for me!
+    let tries = 0;
     for (;;) {
       const made = [];
       [...slots.children].forEach((s) => { s.className = 'lamp q'; s.textContent = '?'; });
+      // After two tries that don't repeat, Poppy starts the pattern (red, yellow) and the next lantern glows.
+      const helped = tries >= 2;
+      if (helped) {
+        await c.say('SH-VO07', 'instruction');                         // Let's do it together.
+        ['r', 'y'].forEach((col, k) => { slots.children[k].className = `lamp ${col}`; slots.children[k].textContent = ''; made.push(col); });
+      }
       while (made.length < 6) {
+        // The colour that keeps an AB pattern going (used by the glow when helped, and by the automated tests).
+        const want = made.length === 0 ? 'r' : made.length === 1 ? (made[0] === 'r' ? 'y' : 'r') : made[made.length % 2];
+        pal.forEach(([b, col]) => { b.dataset.ok = col === want ? '1' : '0'; b.classList.toggle('glow', helped && col === want); });
         const b = await c.tap(pal.map((p) => p[0]), { idle: 'VO05' });
         const col = pal.find((p) => p[0] === b)[1];
         const s = slots.children[made.length]; s.className = `lamp ${col}`; s.textContent = ''; c.sfx.pop();
@@ -137,7 +147,9 @@
         if (isPattern) { c.sparkle(slots); await c.say('VO11', 'praise'); ok = true; }
         else { await c.say('VO06', 'transition'); await c.say('VO05', 'question'); }
       });
+      pal.forEach(([b]) => b.classList.remove('glow'));
       if (ok) return;
+      tries++;
     }
   }
 })();

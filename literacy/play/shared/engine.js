@@ -307,6 +307,9 @@
               const d = drag; drag = null;
               d.p.classList.remove('dragging'); d.p.style.transform = '';
               if (!d.moved) { // a tap: select this piece
+                // A piece sitting in a target (swap layouts) counts as tapping that target once another piece is chosen.
+                const holder = sel && sel !== d.p && targets.find((t) => t !== d.p && t.contains(d.p));
+                if (holder) { finish({ piece: sel, target: holder }); return; }
                 clear(); sel = d.p; sel.classList.add('sel'); targets.forEach((t) => t.classList.add('hint'));
                 if (opts.onSelect) opts.onSelect(sel);
                 return;
@@ -315,7 +318,7 @@
               targets.forEach((x) => x.classList.remove('over'));
               if (t) finish({ piece: d.p, target: t });
             }
-            function tapT(ev) { if (done || S.busy || !sel) return; S.lastTouch = Date.now(); finish({ piece: sel, target: ev.currentTarget }); }
+            function tapT(ev) { if (done || S.busy || !sel || ev.currentTarget.contains(sel)) return; S.lastTouch = Date.now(); finish({ piece: sel, target: ev.currentTarget }); }
             pieces.forEach((p) => { p.classList.add('ready'); p.addEventListener('pointerdown', down); });
             targets.forEach((t) => { t.classList.add('ready'); t.addEventListener('click', tapT); });
             addEventListener('pointermove', move); addEventListener('pointerup', up);

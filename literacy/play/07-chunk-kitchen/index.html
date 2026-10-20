@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chunk Kitchen · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.ticket{background:#fffdf8;border:.5cqmin dashed #c99a5e;border-radius:1.6cqmin;padding:1.4cqmin 3.4cqmin;font:800 4.4cqmin/1 'Nunito Sans',sans-serif;color:#5a3d22;display:flex;align-items:center;gap:1.6cqmin;cursor:pointer;transform:rotate(-2deg)}
+.ticket b{font-size:6cqmin;letter-spacing:.04em}
+.pot{display:flex;align-items:center;gap:.6cqmin;min-height:15cqmin;padding:2cqmin 5cqmin 4cqmin;background:radial-gradient(120% 70% at 50% 100%,#6d5340 0 60%,#836650 61%);border-radius:2cqmin 2cqmin 9cqmin 9cqmin;box-shadow:0 1.2cqmin 0 #4a372a;cursor:pointer}
+.pot .ch{font:800 8cqmin/1 'Nunito Sans',sans-serif;color:#fffdf8;padding:1cqmin 2cqmin;border-radius:1.6cqmin;letter-spacing:.04em}
+.pot .ch.base{background:#3e8a86}
+.pot .ch.add{background:#d9785f;animation:slidein .45s ease both}
+.pot .ch.gap{background:transparent;border:.5cqmin dashed rgba(255,253,248,.7);min-width:8cqmin;color:transparent}
+.pot.served{animation:hop .5s ease 2}
+.pot.lit .ch.base{box-shadow:0 0 0 .8cqmin #f5d57a}
+.jars{display:flex;gap:3cqmin;justify-content:center;flex-wrap:wrap}
+.jar{min-width:15cqmin;min-height:17cqmin;flex-direction:column;border-radius:3cqmin 3cqmin 2cqmin 2cqmin;border-top:2.2cqmin solid #b0754a}
+.jar span{font:800 6.4cqmin/1 'Nunito Sans',sans-serif;color:#d9785f;background:#fff1ea;border:.4cqmin solid #f0c3b2;padding:.8cqmin 1.6cqmin;border-radius:1.2cqmin}
+.menu{display:flex;gap:1.2cqmin;flex-wrap:wrap;justify-content:center;min-height:5cqmin}
+.menu i{font:800 2.8cqmin/1 'Nunito Sans',sans-serif;font-style:normal;background:#3b2f2a;color:#fffdf8;padding:.8cqmin 1.6cqmin;border-radius:.8cqmin;animation:pop .3s ease both}
+.dish{font-size:9cqmin}
+@keyframes slidein{from{transform:translateX(-6cqmin);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Chunk Kitchen (Literacy · Unit 7): building words from chunks. Voice: LL-LIT-G07-VO01…VO14, the shared narrator
+   lines, the chunk recordings (CH-*) and the word recordings (WD-*). Bea reads the word the child made: only words
+   that are recorded can be read, so wrong spice jars make either a recorded real word (rain, pain, hat…) or a clear
+   non-word, which gets "Let's read what we made." and the known chunk. Onsets are shown as letters only (no onset
+   recordings are needed by the design). Levels 3 and 4 have two orders each because only jump/jumping/jumped and
+   unlock/relock are recorded. */
+(() => {
+  const PIC = window.LL_PICS;
+  const has = (w) => !!window.LL_LINES['WD-' + w];
+  // pos 'start': the jar goes before the chunk in the pot; 'end': after it; 'switch': replaces the first chunk.
+  const ORDERS = [
+    [ // Level 1: rime families -at, -in, -ock; pick the onset
+      { word: 'cat', chunk: 'at', add: 'c', jars: ['c', 'h', 'b'] },
+      { word: 'hat', chunk: 'at', add: 'h', jars: ['h', 'b', 'c'] },
+      { word: 'bat', chunk: 'at', add: 'b', jars: ['b', 'c', 'h'] },
+      { word: 'pin', chunk: 'in', add: 'p', jars: ['p', 'ch', 'v'] },
+      { word: 'chin', chunk: 'in', add: 'ch', jars: ['ch', 'p', 'v'] },
+      { word: 'sock', chunk: 'ock', add: 's', jars: ['s', 'v', 'z'] },
+    ],
+    [ // Level 2: vowel teams -ain, -ight, -oat; blends as onsets
+      { word: 'train', chunk: 'ain', add: 'tr', jars: ['tr', 'r', 'gr'] },
+      { word: 'grain', chunk: 'ain', add: 'gr', jars: ['gr', 'tr', 'p'] },
+      { word: 'rain', chunk: 'ain', add: 'r', jars: ['r', 'p', 'tr'] },
+      { word: 'light', chunk: 'ight', add: 'l', jars: ['l', 'n', 'v'] },
+      { word: 'night', chunk: 'ight', add: 'n', jars: ['n', 'l', 'v'] },
+      { word: 'boat', chunk: 'oat', add: 'b', jars: ['b', 'c', 'g'] },
+      { word: 'goat', chunk: 'oat', add: 'g', jars: ['g', 'b', 'c'] },
+    ],
+    [ // Level 3: add an ending
+      { word: 'jumping', chunk: 'jump', add: 'ing', jars: ['ing', 'ed'], pos: 'end' },
+      { word: 'jumped', chunk: 'jump', add: 'ed', jars: ['ed', 'ing'], pos: 'end' },
+    ],
+    [ // Level 4: switch one chunk
+      { word: 'unlock', chunk: 'lock', from: 're', add: 'un', jars: ['un', 're'], pos: 'switch' },
+      { word: 'relock', chunk: 'lock', from: 'un', add: 're', jars: ['re', 'un'], pos: 'switch' },
+    ],
+  ];
+  const levels = [
+    { label: '1 · Beacon (6–7)' }, { label: '2 · Beacon (6–7)' }, { label: '3 · Lighthouse (7–8)' }, { label: '4 · Lighthouse (8–9)' },
+  ];
+  let plan = [], menu = [];
+  const made = (o, jar) => (o.pos === 'end' ? o.chunk + jar : jar + o.chunk);
+  const chunkKey = (o) => ['CH-' + o.chunk, 'WD-' + o.chunk].find((k) => window.LL_LINES[k]) || null;   // 'lock' alone is not recorded
+
+  LL.game({
+    code: 'G07', name: 'Chunk Kitchen', accent: '#d9785f',
+    guide: { name: 'Bea the bear', kind: 'bear', color: '#c08a5b' },
+    bg: 'linear-gradient(#fff4e0 0 60%, #f1dcc0 60%)',
+    reward: { icon: '🍲' }, doneLine: 'Every order is served!',
+    levels, rounds: (lv) => (lv < 2 ? 5 : 2), intro: ['VO01'], idle: 'VO12', goodbye: 'VO14',
+    complete: ['VO13', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => /^(G07-|SH-|CH-|WD-)/.test(k)),
+    async levelStart(c) {
+      const all = ORDERS[c.level];
+      plan = c.level < 2 ? LL.shuffle(all).slice(0, 5) : LL.shuffle(all);
+      menu = [];
+      if (c.firstTime('demo')) {
+        // Here's 'ain'. Add 'tr' and it makes train!
+        const pot = c.el(`<div class="pot"><span class="ch gap">tr</span><span class="ch base">ain</span></div>`);
+        c.area.replaceChildren(pot);
+        await c.say('VO02', 'instruction');                          // Read the order, then add the chunk that makes the word.
+        const say = c.say('VO03', 'instruction');
+        await c.wait(1400);
+        pot.firstElementChild.className = 'ch add';
+        await say;
+        await c.say('WD-train', 'count');
+      } else if (c.level === 0) await c.say('VO02', 'instruction');
+    },
+    async round(c, i) {
+      const o = plan[i];
+      const ticket = c.el(`<button class="ticket" type="button" aria-label="Order: ${o.word}">Order: <b>${o.word}</b></button>`);
+      const potHTML = (jar) => {
+        if (o.pos === 'end') return `<span class="ch base">${o.chunk}</span><span class="ch ${jar ? 'add' : 'gap'}">${jar || '__'}</span>`;
+        if (o.pos === 'switch') return `<span class="ch ${jar ? 'add' : 'add'}">${jar || o.from}</span><span class="ch base">${o.chunk}</span>`;
+        return `<span class="ch ${jar ? 'add' : 'gap'}">${jar || '__'}</span><span class="ch base">${o.chunk}</span>`;
+      };
+      const pot = c.el(`<button class="pot" type="button" aria-label="The pot: ${o.pos === 'switch' ? o.from + o.chunk : o.chunk}">${potHTML(null)}</button>`);
+      const jars = c.el(`<div class="jars"></div>`);
+      const items = LL.shuffle(o.jars).map((j) => { const b = c.el(`<button class="opt jar" type="button" aria-label="${j}"><span>${j}</span></button>`); jars.appendChild(b); return { el: b, ok: j === o.add, j }; });
+      const board = c.el(`<div class="menu" aria-label="Menu board">${menu.map((w) => `<i>${w}</i>`).join('')}</div>`);
+      c.area.replaceChildren(ticket, pot, jars, board);
+
+      const question = o.pos === 'end' ? 'VO05' : o.pos === 'switch' ? 'VO06' : 'VO04';
+      const ask = async () => { await c.say('WD-' + o.word, 'transition'); await c.say(question, 'question'); };
+      c.setPrompt(ask);
+      c.setClue(async () => { pot.classList.add('lit'); await c.say('VO07', 'instruction'); if (chunkKey(o)) await c.say(chunkKey(o), 'count'); pot.classList.remove('lit'); });
+      // The ticket and the pot can be read aloud on tap while the child is choosing (a11y: "order ticket can be read aloud").
+      ticket.addEventListener('click', () => { if (!c.alive()) return; c.say('WD-' + o.word, 'count').catch(() => {}); });
+      pot.addEventListener('click', () => { if (!c.alive() || !chunkKey(o)) return; c.say(chunkKey(o), 'count').catch(() => {}); });
+      await ask();
+      if (i === 0) await c.hearAgainTip();
+
+      let last = null;
+      const readMade = async () => {
+        const w = made(o, last.j);
+        pot.innerHTML = potHTML(last.j);
+        await c.wait(500);
+        if (w !== o.word && has(w)) { await c.say('WD-' + w, 'count'); await c.say('VO10', 'retry'); }   // rain! That's a real word too! Now make the order word.
+        else { await c.say('VO11', 'retry'); pot.classList.add('lit'); if (chunkKey(o)) await c.say(chunkKey(o), 'count'); pot.classList.remove('lit'); }   // Let's read what we made. (ain)
+        pot.innerHTML = potHTML(null);
+      };
+      await c.choice({
+        items, reduce: o.jars.length > 2,
+        onTap: (it) => { last = it; },
+        miss1: readMade,
+        miss2: readMade,
+        miss3: async () => { await readMade(); await c.say('SH-VO07', 'instruction'); },
+      });
+      await c.busy(async () => {
+        pot.innerHTML = potHTML(o.add);
+        await c.wait(500);
+        pot.classList.add('served'); c.sfx.fanfare();
+        await c.say('WD-' + o.word, 'count');
+        await c.say(i % 2 ? 'VO09' : 'VO08', 'praise');                // Order served! / You spotted the chunk!
+        menu.push(o.word);
+        board.appendChild(Object.assign(document.createElement('i'), { textContent: o.word }));
+        await c.wait(400);
+      });
+    },
+  });
+})();
+</script>
+</body>
+</html>
