@@ -402,6 +402,123 @@ button:focus-visible{outline:4px solid var(--teal);outline-offset:4px}
   <div class="sr-only" aria-live="polite" id="sr"></div>
 </div></div></div>
 
+<script>/* LL-VOICE-TIMING:START — copied from games/shared/voice-timing.js by tools/sync-voice-timing.mjs; edit that file, not this one. */
+/* LITTLE LANTERNS · VOICE TIMING (shared by every game)
+   ---------------------------------------------------------------------------------------------
+   This is the one place to adjust how voiceovers are paced. After editing, run
+     node tools/sync-voice-timing.mjs
+   to copy it into every game's index.html (each game stays a single self-contained file).
+
+   How it works
+   - Voice lines never overlap and never cut each other off: a new line waits for the line
+     before it to finish, then waits a pause of real silence. The recordings are never sped up
+     or slowed down.
+   - The pause depends on what the line before was for (its "kind" below). After a question the
+     pause is long, so a hint or a repeat never arrives while a child is still thinking.
+   - When the child taps the screen after a line has started, the pause shrinks to
+     afterChildActsMs: feedback answers the child promptly, but still never interrupts.
+   - Asking for a line that is already playing or waiting to play does nothing, so tapping the
+     speaker button (or anything else) repeatedly can't stack up audio.
+   - Spoken reminders when a child hasn't touched anything are limited to maxSpokenNudges per
+     question; after that only the gentle visual wiggle continues. Any tap resets the count.
+   - Changing screen (back, play again, next level, choosing a level) clears any waiting lines. */
+window.LL_VOICE_TIMING = {
+  // Silence (ms) after a line, by the kind of line it was.
+  pauseAfter: {
+    count: 550,        // a number in a counting sequence ("one … two … three")
+    praise: 900,       // "Yes! That's right!", "Hooray! They're the same!"
+    retry: 1300,       // "Good guess, but try again", "Too many!"
+    instruction: 1600, // "Tap the apples", level intros, demonstrations
+    question: 4000,    // "How many ducks?", "Which jar has three?" — thinking time
+    closing: 1600,     // "Well done!", "Do you want to play again…?"
+    line: 1000,        // anything not listed below
+  },
+  afterChildActsMs: 250,
+
+  // How long a child can be still before a reminder.
+  visualNudgeMs: 8000,      // a gentle wiggle or glow on what to tap
+  spokenNudgeMs: 16000,     // the question or hint spoken again, at most this often
+  maxSpokenNudges: 2,       // per question, until the child taps something
+
+  // The kind of each voice clip, by the key the games use.
+  kinds: {
+    praise: ['right', 'youSawIt', 'hooray', 'yum', 'platesSame', 'countedAll', 'noneLeft', 'keepGoing'],
+    retry: ['tryAgain', 'more', 'tooMany', 'mineTaller', 'yoursTaller', 'wrongWay', 'already', 'lookClosely'],
+    instruction: ['welcome', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6', 'tap', 'tapApples', 'moveApples',
+      'tapDucks', 'nextDuck', 'makeTower', 'tapBlock', 'share', 'lineUp', 'noPartner', 'trace', 'copy', 'listen', 'spot',
+      'startDot', 'watchMe', 'peekAgain', 'quickLook', 'watchLeft', 'tapCookie', 'zeroHint', 'emptyHint', 'tenMore',
+      'hintLook', 'hintLast', 'clue', 'clueSign'],
+    question: ['howMany', 'howManyThere', 'howManyLanterns', 'howManyOranges', 'howManyLadybirds', 'howManyBubbles',
+      'howManySpots', 'howManyFingers', 'askMore', 'askFewer', 'whichJar', 'findNumber', 'findWord', 'findFlowers',
+      'whichPlate', 'pick1', 'pick2', 'pick3', 'pick4', 'pick5', 'pick6', 'pick7', 'pick8', 'pick9', 'pick10',
+      'give1', 'give2', 'give3', 'give4', 'give5', 'give6', 'give7', 'give8', 'give9', 'give10'],
+    closing: ['wellDone', 'playAgain'],
+  },
+};
+
+/* The voice queue. Games call LLVoice.turn(key) before starting a clip and get back a function to
+   call with the clip's length once it starts (or null if it shouldn't play). */
+window.LLVoice = (() => {
+  const T = window.LL_VOICE_TIMING;
+  const kindOf = {};
+  Object.keys(T.kinds).forEach((k) => T.kinds[k].forEach((key) => { kindOf[key] = k; }));
+  const kind = (key) => (/^\d+$/.test(key) ? 'count' : kindOf[key] || 'line');
+  const now = () => Date.now();
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  let chain = Promise.resolve(), epoch = 0;
+  let lastKey = null, lastStart = 0, lastEnd = 0, lastTouch = 0, nudges = 0;
+  const pending = new Set();   // keys waiting or playing
+
+  const pauseAfter = (key) => {
+    const p = T.pauseAfter[kind(key)];
+    return lastTouch > lastStart ? Math.min(p, T.afterChildActsMs) : p;
+  };
+  const earliest = () => (lastKey === null ? 0 : lastEnd + pauseAfter(lastKey));
+
+  function turn(key) {
+    key = String(key);
+    if (pending.has(key)) return Promise.resolve(null);
+    pending.add(key);
+    const my = epoch;
+    let release;
+    const mine = new Promise((r) => { release = r; });
+    const before = chain;
+    chain = before.then(() => mine);
+    const finish = () => { pending.delete(key); release(); };
+    return before.then(async () => {
+      for (;;) {
+        if (my !== epoch) { finish(); return null; }
+        const wait = earliest() - now();
+        if (wait <= 0) break;
+        await sleep(Math.min(wait, 100));
+      }
+      return (ms) => {
+        lastKey = key; lastStart = now(); lastEnd = lastStart + (ms || 0);
+        setTimeout(() => { if (my === epoch) pending.delete(key); }, ms || 0);
+        release();
+      };
+    });
+  }
+
+  // Clear anything waiting (used when the screen changes). The caller stops the clip itself.
+  function cancel() { epoch++; pending.clear(); lastKey = null; lastEnd = 0; }
+
+  // True while a line is playing or waiting to play.
+  const busy = () => pending.size > 0 || now() < lastEnd;
+
+  // Whether an idle reminder may be spoken now; counts it when it may.
+  function nudge() {
+    if (busy() || nudges >= T.maxSpokenNudges) return false;
+    nudges++; return true;
+  }
+
+  document.addEventListener('pointerdown', () => { lastTouch = now(); nudges = 0; }, true);
+  document.addEventListener('keydown', () => { lastTouch = now(); nudges = 0; }, true);
+
+  return { turn, cancel, busy, nudge, kind, T };
+})();
+/* LL-VOICE-TIMING:END */</script>
 <script>
 /* VOICE CLIPS — base64 MP3s. Reused recordings: numbers 1–10 and 'tryAgain' (Light the Lanterns), 'right' (Duck Pond).
    Quick Peek recordings (originals in audio/): 'welcome', 'howManyLanterns', 'howManyOranges', 'howManyLadybirds', 'howManyBubbles',
@@ -419,8 +536,8 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   // Fallback lengths; when a clip decodes, its real length is used instead, so new recordings need no tuning here.
   const SPEECH_MS = {1: 600, 2: 580, 3: 680, 4: 650, 5: 580, 6: 740, 7: 690, 8: 580, 9: 700, 10: 600};
   const PHRASE_MS = {tryAgain: 2600, right: 2000, playAgain: 3500};
-  const SPOKEN_NUDGE_MS = 12000;   // idle voice hints at most this often
-  const IDLE_NUDGE_MS = 6000;
+  const SPOKEN_NUDGE_MS = LLVoice.T.spokenNudgeMs;   // idle voice hints at most this often
+  const IDLE_NUDGE_MS = LLVoice.T.visualNudgeMs;
   const ROUNDS = 5;
   const KINDS = {
     lantern:  { one: 'lantern',  many: 'lanterns',  ask: 'howManyLanterns' },
@@ -475,18 +592,24 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     }
     const running = () => !!ctx && ctx.state === 'running';
     const has = (key) => !!VOICE[key];
-    function stop() { if (!current) return; try { current.stop ? current.stop() : current.pause(); } catch (e) {} current = null; }
-    // Plays a clip and resolves with how long it lasts (0 when the clip isn't recorded yet).
+    function stop() { LLVoice.cancel(); if (!current) return; try { current.stop ? current.stop() : current.pause(); } catch (e) {} current = null; }
+    // Plays a clip once the line before it, and the pause after that line, have finished (games/shared/voice-timing.js):
+    // lines never overlap or cut each other off. Resolves with the clip's length in ms, or 0 when it isn't recorded,
+    // is already playing or waiting, or the screen changed while it waited.
     async function play(key, fallback) {
+      key = String(key);
       if (!VOICE[key]) return 0;
-      await unlock(); stop();
+      await unlock();
+      const started = await LLVoice.turn(key);
+      if (!started) return 0;
+      let ms = fallback || 2500;
       if (ctx && buffers[key]) {
         const src = ctx.createBufferSource(); src.buffer = buffers[key]; src.connect(ctx.destination); src.start();
         src.onended = () => { if (current === src) current = null; }; current = src;
-        return buffers[key].duration * 1000 + 120;
-      }
-      try { const a = new Audio('data:audio/mpeg;base64,' + VOICE[key]); a.play().catch(() => {}); current = a; } catch (e) {}
-      return fallback;
+        ms = buffers[key].duration * 1000 + 120;
+      } else { try { const a = new Audio('data:audio/mpeg;base64,' + VOICE[key]); a.play().catch(() => {}); current = a; } catch (e) {} }
+      started(ms);
+      return ms;
     }
     async function say(n) { return sleep(await play(n, SPEECH_MS[n] || 700) || 500); }
     async function phrase(key) { const ms = await play(key, PHRASE_MS[key] || 2500); if (ms) await sleep(ms); }
@@ -499,7 +622,7 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     }
     const NOTES = [0, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51, 1567.98, 1760];
     return {
-      unlock, running, has, say, phrase,
+      unlock, running, has, say, phrase, stop,
       chime: (n) => { tone(NOTES[n] || 660, 0, 0.7, 0.1); tone((NOTES[n] || 660) * 2, 0.04, 0.45, 0.03); },
       flip: () => { tone(880, 0, 0.08, 0.04); tone(1320, 0.04, 0.12, 0.03); },
       whoosh: () => { tone(300, 0, 0.18, 0.03); tone(200, 0.06, 0.22, 0.025); },
@@ -759,7 +882,7 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     $('#done').hidden = true; $('#startBtn').hidden = true;
     $('#lookLabel').hidden = true; $('#peekbar').hidden = true; $('#bubble').classList.remove('show');
   }
-  function goHome() { S.token++; S.busy = false; S.phase = 'idle'; show('home'); }
+  function goHome() { S.token++; Sound.stop(); S.busy = false; S.phase = 'idle'; show('home'); }
 
   function makePlan(lv) {
     // Five rounds with a mix of amounts from the level's range, never the same twice in a row.
@@ -778,6 +901,7 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
   }
 
   async function start(level) {
+    Sound.stop();
     S.token++; S.level = level; S.round = 0; S.busy = true; S.phase = 'look'; S.lastTouch = Date.now();
     const tok = S.token, lv = LV();
     S.peekMs = lv.peek[0];
@@ -849,7 +973,7 @@ const VOICE = {"1": "SUQzBAAAAAEEH1RTU0UAAAANAAADTGF2ZjYzLjEuMTAyR0VPQgABA34AAAN
     if (Date.now() - S.lastTouch < IDLE_NUDGE_MS) return;
     S.lastTouch = Date.now();
     restart($('#choices'), 'wiggle');
-    if (Date.now() - S.lastSpoken > SPOKEN_NUDGE_MS) { S.lastSpoken = Date.now(); Sound.phrase(K().ask); }
+    if (Date.now() - S.lastSpoken > SPOKEN_NUDGE_MS && LLVoice.nudge()) { S.lastSpoken = Date.now(); Sound.phrase(K().ask); }
   }, 1000);
 
   if (window.ResizeObserver) new ResizeObserver(fit).observe(viewport);
