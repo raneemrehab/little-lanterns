@@ -1,0 +1,12 @@
+{
+  "name": "learning-lanterns",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Learning Lanterns website: a dependency-free static site.",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "node build.mjs --preview",
+    "serve": "node build.mjs && node serve.mjs"
+  }
+}
