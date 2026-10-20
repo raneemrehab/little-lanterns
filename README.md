@@ -28,3 +28,28 @@ Early years learning resources for nurseries, teachers and families (ages 2–6)
 - **Fonts:** Bricolage Grotesque (headings, numbers), Nunito Sans (body)
 - **Core colours:** cream `#FBF6EC`, paper `#FFFDF8`, ink `#263238`, teal `#3E8A86` (maths), deep teal `#2C6B68`
 - **Accents:** coral `#E7836C`, butter `#F5D57A`, sage `#93B795`, sky `#86BDE3`, lavender `#AE9FD8`
+
+## The website
+
+The Learning Lanterns website lives alongside the games. It is a static site with no dependencies, built with Node 18 or newer.
+
+```sh
+npm run build     # builds the site into dist/
+npm run serve     # builds, then serves dist/ at http://localhost:4321 (with the 404 page)
+npm run preview   # builds preview/, whose links work when opened straight from disk
+```
+
+Upload the contents of `dist/` to any static host. The games are copied into `dist/games/` unchanged, so every
+game keeps its own address (`/games/duck-pond/` and so on). Each game also gets a branded play page in the
+Number Nook (`/explore/number-nook/duck-pond/`) that embeds it with an iframe, as the game READMEs recommend.
+`dist/404.html` is the custom "page not found" page; most static hosts (GitHub Pages, Netlify, Cloudflare Pages)
+use it automatically.
+
+| Where | What to edit |
+| --- | --- |
+| `src/config.mjs` | Site URL, base path, a real contact email, and a form endpoint. Forms and email links stay hidden until these are set. |
+| `src/data/games.mjs` | The list of games shown on the site. Add a game here after adding its folder to `games/`. |
+| `src/data/studios.mjs` | The six learning studios and their wording. |
+| `src/data/resources.mjs` | Printables (none yet) and hands-on toy concepts. |
+| `src/pages/` | Page content. `src/components/` holds the shared header, footer, cards, forms and SVG doodles. |
+| `src/assets/` | Styles, scripts and images. `src/assets/img/games/` holds real screenshots of each game's start screen. |
