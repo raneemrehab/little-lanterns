@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Train · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.engine{display:flex;align-items:center;gap:2cqmin;background:#3e8a86;color:#fffdf8;border-radius:3cqmin 6cqmin 2cqmin 2cqmin;padding:2.4cqmin 5cqmin;box-shadow:0 1.2cqmin 0 #2c6b68;position:relative}
+.engine .word{font:800 9cqmin/1 'Nunito Sans',sans-serif;letter-spacing:.05em}
+.engine .sent{font:800 5cqmin/1.25 'Nunito Sans',sans-serif;max-width:70cqmin}
+.engine::after{content:"";position:absolute;left:4cqmin;right:4cqmin;bottom:-3.6cqmin;height:3cqmin;background:radial-gradient(circle at 15% 50%,#263238 0 1.4cqmin,transparent 1.5cqmin),radial-gradient(circle at 85% 50%,#263238 0 1.4cqmin,transparent 1.5cqmin)}
+.engine.toot{animation:hop .5s ease 2}
+.car{border-bottom:2cqmin solid #546e7a;border-radius:2cqmin}
+.car .em{font-size:10cqmin}
+.scene{font-size:8cqmin;letter-spacing:-.5cqmin}
+.sense .opt{min-width:22cqmin;min-height:16cqmin;font:800 3.6cqmin/1.2 var(--body)}
+.sense .opt .em{font-size:8cqmin}
+.wait{font:800 3.4cqmin/1 var(--body);color:#2c6b68;background:rgba(255,253,248,.8);padding:1cqmin 2.4cqmin;border-radius:999px}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/pictures.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Word Train (Literacy · Unit 6): reading words and sentences. Voice: LL-LIT-G06-VO01…VO15, shared narrator lines and
+   word recordings. The sound buttons under each word need the letter-sound recordings (LL-LIT-PH-*), which are not
+   supplied yet, so they are not shown; "Let's sound it out together" is followed by the whole word. Sentences are read
+   by the child (no sentence recordings exist). */
+(() => {
+  const PIC = window.LL_PICS;
+  const levels = [
+    { label: '1 · Beacon (5–6)', mode: 'word', words: ['pig', 'pin', 'pen', 'cat', 'cot'] },
+    { label: '2 · Beacon (5–6)', mode: 'word', words: ['frog', 'milk', 'tent', 'jump', 'frog'] },
+    { label: '3 · Beacon (6–7)', mode: 'sentence' },
+    { label: '4 · Beacon (6–7)', mode: 'sense' },
+  ];
+  const DISTRACT = { pig: ['pin', 'pen'], pin: ['pig', 'pen'], pen: ['pin', 'hen'], cat: ['cot', 'cap'], cot: ['cat', 'cup'], frog: ['fox', 'log'], milk: ['map', 'mouse'], tent: ['ten', 'net'], jump: ['run', 'duck'] };
+  const SENTENCES = [
+    { t: 'The pig is in the mud.', pic: '🐷🟫' }, { t: 'I see a frog.', pic: '👀🐸' }, { t: 'The cat can jump.', pic: '🐱🦘' },
+    { t: 'The hen is in a tent.', pic: '🐔⛺' }, { t: 'The dog has a pen.', pic: '🐶🖊️' }, { t: 'The fish is in a cup.', pic: '🐟☕' },
+  ];
+  const SENSE = [
+    { t: 'The cat can jump.', ok: true }, { t: 'The cup can run.', ok: false, line: 'VO11' }, { t: 'I see a red bus.', ok: true },
+    { t: 'The pig can fly.', ok: false }, { t: 'A fish can swim.', ok: true }, { t: 'The bed can sing.', ok: false },
+  ];
+  let plan = [];
+
+  LL.game({
+    code: 'G06', name: 'Word Train', accent: '#7d6cc0',
+    guide: { name: 'Otto the otter', kind: 'otter', color: '#a77c5a' },
+    bg: 'linear-gradient(180deg,#d9ecf2 0%,#e9f1dc 60%,#c6dba9 100%)',
+    reward: { icon: '🚂' }, doneLine: 'Your train is full! All aboard!',
+    levels, rounds: 5, intro: ['VO01'], idle: 'VO13', goodbye: 'VO15',
+    complete: ['VO14', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G06-') || k.startsWith('SH-') || k.startsWith('WD-')),
+    async levelStart(c) {
+      const L = c.L;
+      plan = L.mode === 'word' ? LL.shuffle(L.words) : L.mode === 'sentence' ? LL.shuffle(SENTENCES).slice(0, 5) : [...LL.shuffle(SENSE.filter((s) => !s.ok)).slice(0, 2), ...LL.shuffle(SENSE.filter((s) => s.ok)).slice(0, 3)].sort(() => Math.random() - 0.5);
+      if (L.mode === 'word' && c.firstTime('demo')) {
+        c.area.replaceChildren(c.el(`<div class="engine"><span class="word">pig</span></div>`), c.el(`<div class="opt car">${pic('pig')}</div>`));
+        await c.say('VO03', 'instruction');                          // p… i… g. pig. Here's the pig carriage!
+      }
+      if (L.mode === 'word') await c.say('VO02', 'instruction');      // (sentence and sense rounds open with their own question)
+    },
+    async round(c, i) {
+      const L = c.L;
+      if (L.mode === 'sense') return senseRound(c, i, plan[i]);
+      const isWord = L.mode === 'word', item = plan[i];
+      const engine = c.el(`<div class="engine" aria-label="${isWord ? item : item.t}">${isWord ? `<span class="word">${item}</span>` : `<span class="sent">${item.t}</span>`}</div>`);
+      const row = c.el(`<div class="row"></div>`);
+      c.area.replaceChildren(engine, c.el(`<span class="wait">Read it first…</span>`));
+      // Read first: the pictures arrive after a pause, so the child reads instead of guessing.
+      await c.say('VO04', 'instruction');                            // Read the word first.
+      await c.wait(isWord ? 2500 : 4500);
+      let opts;
+      if (isWord) opts = LL.shuffle([item, ...DISTRACT[item].filter((w) => PIC[w]).slice(0, 2)]).map((w) => ({ html: pic(w), ok: w === item, w }));
+      else opts = LL.shuffle([item, ...LL.shuffle(SENTENCES.filter((s) => s !== item)).slice(0, 2)]).map((s) => ({ html: `<span class="scene">${s.pic}</span>`, ok: s === item }));
+      const items = opts.map((o) => { const b = c.el(`<button class="opt car" type="button" aria-label="${o.w || 'picture'}">${o.html}</button>`); row.appendChild(b); return { el: b, ok: o.ok }; });
+      c.area.replaceChildren(engine, row);
+      c.setPrompt(() => c.say(isWord ? 'VO05' : 'VO06', 'question'));
+      await c.say(isWord ? 'VO05' : 'VO06', 'question');             // Now find the picture.
+      if (i === 0) await c.hearAgainTip();
+      await c.choice({
+        items,
+        miss1: async () => { c.restart(engine, 'wiggle'); await c.say('SH-VO01', 'retry'); },
+        // Words: Let's sound it out together (then the word). Sentences: the shared "make it easier" and one picture goes.
+        miss2: isWord ? async () => { await c.say('VO12', 'retry'); await c.say('WD-' + item, 'count'); } : undefined,
+      });
+      await c.busy(async () => {
+        engine.classList.add('toot'); c.sfx.fanfare();
+        if (isWord) { await c.say('WD-' + item, 'count'); await c.say('VO09', 'praise'); }   // Toot toot! You read it!
+        else await c.say('VO10', 'praise');                          // You checked it made sense!
+      });
+    },
+  });
+  function pic(w) { return `<span class="pic"><span class="em">${PIC[w] || '❔'}</span></span>`; }
+
+  // Level 4: sense or silly?
+  async function senseRound(c, i, s) {
+    const engine = c.el(`<div class="engine" aria-label="${s.t}"><span class="sent">${s.t}</span></div>`);
+    const row = c.el(`<div class="row sense"></div>`);
+    const yes = c.el(`<button class="opt" type="button" aria-label="Makes sense"><span class="em">👍</span>Makes sense</button>`);
+    const shed = c.el(`<button class="opt" type="button" aria-label="Silly shed"><span class="em">🏚️</span>Silly shed</button>`);
+    row.append(yes, shed);
+    c.area.replaceChildren(engine, row);
+    c.setPrompt(() => c.say('VO07', 'question'));
+    await c.say('VO07', 'question');                                 // Does it make sense, or is it silly?
+    await c.choice({ items: [{ el: yes, ok: s.ok }, { el: shed, ok: !s.ok }], reduce: false });
+    await c.busy(async () => {
+      engine.classList.add('toot');
+      if (!s.ok && s.line) await c.say(s.line, 'praise');            // That's silly! A cup can't run.
+      else if (!s.ok) await c.say('VO09', 'praise');
+      else await c.say('VO10', 'praise');                            // You checked it made sense!
+    });
+  }
+})();
+</script>
+</body>
+</html>

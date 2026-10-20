@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Firefly Deliveries · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.village{display:grid;grid-template-columns:repeat(3,auto);gap:3cqmin 4cqmin}
+.house{min-width:15cqmin;min-height:15cqmin;background:#3d4b7a;color:#fffdf8;font-size:9cqmin}
+.house .win{position:absolute;bottom:2.6cqmin;width:4cqmin;height:4cqmin;border-radius:.8cqmin;background:#2a3358;transition:background .25s,box-shadow .25s}
+.house.lit{background:#5a5f8a}
+.house.lit .win,.house.done .win{background:#f5d57a;box-shadow:0 0 3cqmin 1cqmin rgba(245,213,122,.9)}
+.flick{position:absolute;width:7cqmin;height:7cqmin;border-radius:50%;background:radial-gradient(circle,#fff7c2 0 30%,#f5d57a 45%,rgba(245,213,122,0) 72%);box-shadow:0 0 3cqmin 1cqmin rgba(245,213,122,.7);transition:left .5s ease,top .5s ease;pointer-events:none;z-index:5}
+.route{display:flex;gap:1.6cqmin;min-height:5cqmin}
+.route span{width:5cqmin;height:5cqmin;border-radius:50%;border:.5cqmin dashed rgba(255,253,248,.6)}
+.route span.on{background:var(--g-butter);border-color:var(--g-butter)}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Firefly Deliveries (Main · Thinking Control): holding things in mind (sequence memory).
+   Voice: LL-LIT-G15-VO01…VO11 and the shared narrator lines. */
+(() => {
+  const levels = [
+    { label: '1 · Glow (3–4)', len: 2, step: 1100 },
+    { label: '2 · Flame (4–5)', len: 3, step: 950 },
+    { label: '3 · Beacon (5–7)', len: 4, step: 850 },
+    { label: '4 · Lighthouse (7–9)', len: 3, step: 900, back: true },
+  ];
+  let len = 2, streak = 0;
+
+  LL.game({
+    code: 'G15', name: 'Firefly Deliveries', accent: '#d06a52', dark: true,
+    guide: { name: 'Flick the firefly', kind: 'firefly', color: '#f5d57a' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #3b4a7a 0%, #283458 60%, #1c2442 100%)',
+    reward: { icon: '✨' }, doneLine: 'The whole village is glowing!',
+    levels, rounds: 5, intro: ['VO01'], idle: 'VO09', goodbye: 'VO11',
+    complete: ['VO10', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G15-') || k.startsWith('SH-')),
+    async levelStart(c) {
+      len = c.L.len; streak = 0;
+      await c.say('VO02', 'instruction');                           // Watch where I go. Then tap the houses in the same order.
+    },
+    async round(c, i) {
+      const L = c.L;
+      const village = c.el(`<div class="village"></div>`);
+      const houses = Array.from({ length: 6 }, (_, k) => { const b = c.el(`<button class="opt house" type="button" aria-label="House ${k + 1}">🏠<span class="win"></span></button>`); village.appendChild(b); return b; });
+      const route = c.el(`<div class="route" aria-hidden="true"></div>`);
+      const fly = c.el(`<div class="flick" aria-hidden="true"></div>`);
+      c.area.replaceChildren(village, route); c.stage.appendChild(fly);
+      const cleanup = () => fly.remove();
+      try {
+        let tries = 0, path = null;
+        for (;;) {
+          if (!path || path.length !== len) path = LL.shuffle([...houses.keys()]).slice(0, len);   // the same route is shown again after a try
+          const want = L.back ? path.slice().reverse() : path;
+          route.innerHTML = '<span></span>'.repeat(len);
+          // Flick shows the route (slower after a try that didn't match).
+          const showRoute = async (slow) => {
+            houses.forEach((h) => h.classList.remove('lit', 'done'));
+            await c.say('VO03', 'instruction');                     // Watch carefully.
+            const sr = c.stage.getBoundingClientRect();
+            for (const k of path) {
+              const r = houses[k].getBoundingClientRect();
+              fly.style.left = (r.left - sr.left + r.width / 2 - fly.offsetWidth / 2) + 'px';
+              fly.style.top = (r.top - sr.top - fly.offsetHeight / 3) + 'px';
+              await c.wait(500);
+              houses[k].classList.add('lit'); c.sfx.tick(k * 2);
+              await c.wait((slow ? 1.5 : 1) * L.step - 500);
+              houses[k].classList.remove('lit');
+              await c.wait(250);
+            }
+            fly.style.top = '-20%';
+            await c.wait(400);
+          };
+          const prompt = async () => { if (L.back) await c.say('VO05', 'question'); else await c.say('VO04', 'question'); };
+          await c.busy(async () => { await showRoute(tries > 0); await prompt(); });
+          c.setPrompt(async () => { await showRoute(true); await prompt(); });
+          if (i === 0 && tries === 0) await c.hearAgainTip();
+          let ok = true;
+          houses.forEach((h, k) => { h.dataset.ok = k === want[0] ? '1' : '0'; });   // used by the automated tests
+          for (let s = 0; s < want.length; s++) {
+            const tapped = await c.tap(houses.filter((h) => !h.classList.contains('done')), { nudge: houses });
+            houses.forEach((h) => { h.dataset.ok = '0'; });
+            if (tapped === houses[want[s]]) { tapped.classList.add('done'); c.sfx.tick(s * 3); route.children[s].classList.add('on'); }
+            else { ok = false; c.sfx.soft(); c.restart(tapped, 'wiggle'); break; }
+            if (s + 1 < want.length) houses[want[s + 1]].dataset.ok = '1';
+          }
+          if (ok) {
+            await c.busy(async () => {
+              houses.forEach((h) => h.classList.add('done')); c.sparkle(village); c.sfx.chime();
+              await c.say('VO06', 'praise');                         // Delivered! All in the right order.
+              if (tries === 0 && ++streak >= 2 && len < L.len + 1 && i < 4) { streak = 0; len++; await c.say('VO07', 'praise'); }
+            });
+            return;
+          }
+          tries++; streak = 0;
+          await c.busy(async () => {
+            await c.say('VO08', 'retry');                             // Let's watch the route again.
+            if (tries >= 2 && len > 2) { len--; tries = 0; }
+          });
+        }
+      } finally { cleanup(); }
+    },
+  });
+})();
+</script>
+</body>
+</html>
