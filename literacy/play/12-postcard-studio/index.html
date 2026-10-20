@@ -59,7 +59,7 @@
     if (mode === 'punct') return { words: ['I', 'see', 'a', 'big', n[0]], pic: PIC[n[0]] };
     if (mode === 'distract') return { words: ['I', 'see', 'a', n[0], 'and', 'a', n[1]], pic: PIC[n[0]] + PIC[n[1]], extra: 'run' };
     const w = LL.pick(SHORT);
-    return { words: ['I', 'see', 'a', 'huge', w], pic: PIC[w], typed: 3, better: 3 };
+    return { words: ['I', 'see', 'a', 'huge', w], pic: PIC[w], typed: 4, better: 3 };
   }
 
   LL.game({

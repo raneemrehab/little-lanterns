@@ -142,6 +142,7 @@
         miss1: readMade,
         miss2: readMade,
         miss3: async () => { await readMade(); await c.say('SH-VO07', 'instruction'); },
+        onMiss: async (n) => { if (n > 3) await readMade(); },   // later misses: Bea still reads what was made
       });
       await c.busy(async () => {
         pot.innerHTML = potHTML(o.add);

@@ -68,7 +68,7 @@
         c.area.replaceChildren(c.el(`<div class="engine"><span class="word">pig</span></div>`), c.el(`<div class="opt car">${pic('pig')}</div>`));
         await c.say('VO03', 'instruction');                          // p… i… g. pig. Here's the pig carriage!
       }
-      await c.say(L.mode === 'word' ? 'VO02' : L.mode === 'sentence' ? 'VO06' : 'VO07', 'instruction');
+      if (L.mode === 'word') await c.say('VO02', 'instruction');      // (sentence and sense rounds open with their own question)
     },
     async round(c, i) {
       const L = c.L;
@@ -89,9 +89,10 @@
       await c.say(isWord ? 'VO05' : 'VO06', 'question');             // Now find the picture.
       if (i === 0) await c.hearAgainTip();
       await c.choice({
-        items, reduce: isWord,
+        items,
         miss1: async () => { c.restart(engine, 'wiggle'); await c.say('SH-VO01', 'retry'); },
-        miss2: async () => { await c.say('VO12', 'retry'); if (isWord) await c.say('WD-' + item, 'count'); },   // Let's sound it out together.
+        // Words: Let's sound it out together (then the word). Sentences: the shared "make it easier" and one picture goes.
+        miss2: isWord ? async () => { await c.say('VO12', 'retry'); await c.say('WD-' + item, 'count'); } : undefined,
       });
       await c.busy(async () => {
         engine.classList.add('toot'); c.sfx.fanfare();

@@ -264,10 +264,10 @@
                 const canReduce = opts.reduce !== false && live.length > 2;
                 await run(opts.miss2 === undefined ? (canReduce ? 'SH-VO06' : null) : opts.miss2, 'retry');
                 if (canReduce) { const w = shuffle(live.filter((x) => !x.ok))[0]; w.gone = true; w.el.classList.add('gone'); }
-              } else {
+              } else if (misses === 3) {
                 await run(opts.miss3 === undefined ? 'SH-VO07' : opts.miss3, 'instruction');
                 items.find((x) => x.ok).el.classList.add('glow');
-              }
+              } else restart(items.find((x) => x.ok).el, 'bounce');   // the answer already glows; no line is repeated
               if (opts.onMiss) await opts.onMiss(misses, it);
             } finally { S.busy = false; }
             check();

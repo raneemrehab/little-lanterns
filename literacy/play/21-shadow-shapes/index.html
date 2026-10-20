@@ -96,17 +96,18 @@
       turn.addEventListener('click', () => {                        // turns the chosen piece a quarter turn
         const p = pieces.find((x) => x.el === selected) || pieces.find((x) => !x.used && SYMM[x.type] === 360);
         if (!p || p.used) return;
-        p.rot = (p.rot + 90) % 360; p.el.style.setProperty('--r', p.rot + 'deg'); c.sfx.tick(2); turn.classList.remove('glow');
+        p.rot = (p.rot + 90) % 360; p.el.style.setProperty('--r', p.rot + 'deg'); c.sfx.tick(2); turn.classList.remove('glow'); hook(p);
       });
       c.setPrompt(() => c.say('VO03', 'question'));
       await c.say('VO03', 'question');                               // Which piece fits here?
       if (i === 0) await c.hearAgainTip();
+      function hook(p) {                                             // test hooks: which space a piece fits
+        const open = slots.filter((x) => !x.filled && x.type === p.type), s = open.find((x) => fits(p, x)) || open[0];
+        p.el.dataset.piece = '1'; p.el.dataset.target = !s ? 'none' : fits(p, s) ? s.el.getAttribute('aria-label') : 'turn';
+      }
       while (slots.some((s) => !s.filled)) {
         const live = pieces.filter((p) => !p.used);
-        live.forEach((p) => {                                        // test hooks: which space a piece fits
-          const s = slots.find((x) => !x.filled && x.type === p.type);
-          p.el.dataset.piece = '1'; p.el.dataset.target = !s ? 'none' : fits(p, s) ? s.el.getAttribute('aria-label') : 'turn';
-        });
+        live.forEach(hook);
         const { piece, target } = await c.place({ pieces: live.map((p) => p.el), targets: slots.filter((s) => !s.filled).map((s) => s.el), onSelect: (el) => { selected = el; } });
         selected = piece;
         const p = pieces.find((x) => x.el === piece), s = slots.find((x) => x.el === target);
