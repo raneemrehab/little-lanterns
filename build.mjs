@@ -16,6 +16,7 @@ import { exploreLanding, studioPages, gamePages } from './src/pages/explore.mjs'
 import {
   printablesPage, toysPage, schoolsPage, aboutPage, contactPage, privacyPage, termsPage, notFoundPage,
 } from './src/pages/other.mjs';
+import { accountPages } from './src/pages/account.mjs';
 import { studios } from './src/data/studios.mjs';
 import { games } from './src/data/games.mjs';
 import { printables, toyConcepts } from './src/data/resources.mjs';
@@ -26,8 +27,29 @@ const out = join(here, preview ? 'preview' : 'dist');
 
 const pages = [
   home, exploreLanding, ...studioPages, ...gamePages, printablesPage, toysPage, schoolsPage,
-  aboutPage, contactPage, privacyPage, termsPage, notFoundPage,
+  aboutPage, contactPage, privacyPage, termsPage, notFoundPage, ...accountPages,
 ];
+
+// Chart colours for each studio: deeper than the pastel tones so marks stay
+// visible, checked for colour-blind separation in this fixed order.
+const chartColours = {
+  'number-nook': '#B88A00', 'every-way': '#7B67C9', 'word-garden': '#4F9447',
+  'make-and-wonder': '#3A80BF', 'brain-sparks': '#DB6A3C', 'little-life-lab': '#9E3F86',
+};
+const chartOrder = Object.keys(chartColours);
+
+function catalog() {
+  return {
+    studios: chartOrder.map((id) => {
+      const s = studios.find((x) => x.id === id);
+      return { id, name: s.name, subtitle: s.subtitle, color: chartColours[id], open: games.some((g) => g.studio === id), page: `explore/${id}/` };
+    }),
+    games: games.map((g) => ({
+      slug: g.slug, title: g.title, studio: g.studio, practises: g.practises || [], page: g.page,
+      levels: g.curriculumLevels || null, ages: g.ages || null, preview: g.preview || null,
+    })),
+  };
+}
 
 function searchIndex() {
   const items = [
@@ -84,6 +106,7 @@ async function build() {
   await cp(join(here, 'src/assets'), join(out, 'assets'), { recursive: true });
   await writeFile(join(out, 'assets/img/favicon.svg'), favicon);
   await writeFile(join(out, 'assets/js/search-index.js'), `window.LL_SEARCH = ${JSON.stringify(searchIndex())};\n`);
+  await writeFile(join(out, 'assets/js/catalog.js'), `window.LL_CATALOG = ${JSON.stringify(catalog())};\n`);
 
   // Games keep their own files and routes, copied as-is.
   const gamesDir = join(here, 'games');

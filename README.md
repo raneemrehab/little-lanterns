@@ -53,3 +53,4 @@ use it automatically.
 | `src/data/resources.mjs` | Printables (none yet) and hands-on toy concepts. |
 | `src/pages/` | Page content. `src/components/` holds the shared header, footer, cards, forms and SVG doodles. |
 | `src/assets/` | Styles, scripts and images. `src/assets/img/games/` holds real screenshots of each game's start screen. |
+| `supabase/`, `docs/ACCOUNTS.md` | Family accounts, child profiles, the progress dashboard and activity tracking. These stay switched off until a Supabase project is connected: see [docs/ACCOUNTS.md](docs/ACCOUNTS.md). |

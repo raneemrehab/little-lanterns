@@ -1,4 +1,4 @@
-import { site } from '../config.mjs';
+import { site, accountsEnabled } from '../config.mjs';
 import { studios } from '../data/studios.mjs';
 import { lantern, squiggle } from './doodles.mjs';
 
@@ -98,9 +98,21 @@ function header(ctx, h) {
         <span class="brand-word">Learning <em>Lanterns</em></span>
       </a>
       <nav class="primary-nav" id="primary-nav" aria-label="Main">
-        <ul class="nav-list">${links}</ul>
+        <ul class="nav-list">${links}${
+          accountsEnabled
+            ? `<li class="nav-account"><a class="nav-link" href="${h('account/log-in/')}" data-account-link data-href-in="${h('account/')}" data-href-out="${h('account/log-in/')}"><span data-account-label>Log in</span></a></li>`
+            : ''
+        }</ul>
       </nav>
       <div class="header-actions">
+        ${
+          accountsEnabled
+            ? `<a class="account-link" href="${h('account/log-in/')}" data-account-link data-href-in="${h('account/')}" data-href-out="${h('account/log-in/')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 20c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span class="account-label" data-account-label>Log in</span>
+        </a>`
+            : ''
+        }
         <button class="icon-btn search-open" type="button" aria-haspopup="dialog" aria-controls="search-dialog">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <span class="visually-hidden">Search the site</span>
@@ -177,12 +189,12 @@ function footer(h) {
 
 // ---- Document ----------------------------------------------------------------
 
-export function page(ctx, { title, description = site.description, body, bodyClass = '' }) {
+export function page(ctx, { title, description = site.description, body, bodyClass = '', scripts = [], studio = null }) {
   const h = makeHref(ctx);
   const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.tagline}`;
   const canonical = site.url && !ctx.absolute ? `${site.url.replace(/\/$/, '')}/${ctx.path}` : null;
   return `<!doctype html>
-<html lang="en-GB" data-root="${h.prefix}" data-links="${ctx.fileLinks ? 'file' : 'pretty'}">
+<html lang="en-GB" data-root="${h.prefix}" data-links="${ctx.fileLinks ? 'file' : 'pretty'}"${accountsEnabled ? ` data-sb-url="${esc(site.supabaseUrl)}" data-sb-key="${esc(site.supabaseAnonKey)}"` : ''}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -202,8 +214,10 @@ export function page(ctx, { title, description = site.description, body, bodyCla
   <link rel="stylesheet" href="${h('assets/css/styles.css')}">
   <script defer src="${h('assets/js/search-index.js')}"></script>
   <script defer src="${h('assets/js/main.js')}"></script>
+  ${accountsEnabled ? `<script defer src="${h('assets/vendor/supabase.js')}"></script>\n  <script defer src="${h('assets/js/catalog.js')}"></script>\n  <script defer src="${h('assets/js/accounts.js')}"></script>` : ''}
+  ${scripts.map((src) => `<script defer src="${h(src)}"></script>`).join('\n  ')}
 </head>
-<body class="${bodyClass}">
+<body class="${bodyClass}" data-path="${ctx.absolute ? '' : ctx.path}"${studio ? ` data-studio="${studio}"` : ''}>
   ${header(ctx, h)}
   <main id="main" tabindex="-1">
 ${body(h)}

@@ -13,6 +13,7 @@
 //     practises: ['Counting to 10', 'Number recognition'],
 //     ages: '3–5',                     // only if known, otherwise omit
 //     level: null,                     // only if known, otherwise omit
+//     curriculumLevels: [1, 3],        // curriculum levels covered, only if the README states them
 //     href: 'games/count-the-stars/',  // the game itself (or a full https:// URL)
 //     page: 'explore/number-nook/count-the-stars/', // the branded play page
 //     preview: 'games/count-the-stars/preview.png', // optional screenshot
@@ -66,6 +67,7 @@ export const games = [
     practises: ['Recognising numerals 0 to 20', 'Matching numbers to amounts'],
     ages: '3–6',
     level: 'Levels 2–4 · Glow to Bright',
+    curriculumLevels: [2, 4],
   },
   {
     slug: 'lily-pad-words',
@@ -74,6 +76,7 @@ export const games = [
     practises: ['Number words one to ten', 'Matching words to numbers'],
     ages: '4–6',
     level: 'Levels 3–4 · Shine to Bright',
+    curriculumLevels: [3, 4],
   },
   {
     slug: 'snail-trails',
@@ -82,6 +85,7 @@ export const games = [
     practises: ['Writing numerals 0 to 20', 'Spotting backwards numbers'],
     ages: '4–6',
     level: 'Levels 3–4 · Shine to Bright',
+    curriculumLevels: [3, 4],
   },
   {
     slug: 'maples-cookies',
@@ -90,6 +94,7 @@ export const games = [
     practises: ['Understanding zero', 'Counting down', 'How many are left?'],
     ages: '3–5',
     level: 'Levels 2–3 · Glow to Shine',
+    curriculumLevels: [2, 3],
   },
   {
     slug: 'clovers-picnic',
@@ -98,6 +103,7 @@ export const games = [
     practises: ['More, fewer and same', 'Comparing amounts to 10', 'Sharing fairly'],
     ages: '2–5',
     level: 'Levels 1–3 · Little Sparks to Shine',
+    curriculumLevels: [1, 3],
   },
 ].map((g) => ({
   studio: 'number-nook',

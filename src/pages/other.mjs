@@ -1,4 +1,4 @@
-import { site } from '../config.mjs';
+import { site, accountsEnabled } from '../config.mjs';
 import { studios, studioById } from '../data/studios.mjs';
 import { games } from '../data/games.mjs';
 import { printables, toyConcepts } from '../data/resources.mjs';
@@ -311,14 +311,36 @@ export const privacyPage = {
   body: (h) => `
     ${pageHero(h, { tone: 'sand', crumbs: [['Home', ''], ['Privacy Policy', 'privacy/']], title: 'Privacy Policy' })}
     <section class="section" aria-label="Policy"><div class="container prose">
-      ${placeholder('Legal review needed', 'This page needs a full privacy policy, reviewed for the places you operate (for example UK GDPR and children’s privacy rules), before the site collects any personal information.')}
+      ${placeholder('Legal review needed', 'This page needs a full privacy policy reviewed by a qualified adviser for the places you operate, for example UK GDPR and the Children’s Code, GDPR in the EU, or COPPA in the US, before real families sign up.')}
       <h2>In plain words, for now</h2>
       ${
-        site.formEndpoint
-          ? `<p>When you send us a message or register your interest, we receive the details you type into the form so we can reply. We don’t sell your details or use them for advertising.</p>`
-          : `<p>This website does not currently ask for or store any personal information. There are no accounts and no sign-up forms.</p>`
+        accountsEnabled
+          ? `<h3>Family accounts</h3>
+      <p>Family accounts are for parents and carers aged 18 or over. Children never create their own account, sign in, or type anything that is saved.</p>
+      <p>When you create an account, we keep:</p>
+      <ul>
+        <li><strong>About you:</strong> your first name, your email address and your password, which is stored scrambled so nobody can read it.</li>
+        <li><strong>About each child you add:</strong> a nickname or first name, an age group, a learning level and, if you choose, the learning studios you’d like suggested.</li>
+        <li><strong>Learning activity:</strong> while a child you’ve chosen is playing, which games they open, when, how long they spend actively playing, how many taps they make, and which levels they start and finish. We also note which learning studio pages they visit. We don’t record what they type, their voice or their image, and we don’t record individual answers.</li>
+      </ul>
+      <p>Nothing is recorded unless you’re signed in and have chosen who’s playing. Anyone can play every game without an account.</p>
+      <h3>Who can see it</h3>
+      <p>Only you. The database itself only lets a signed-in parent see and change their own family’s information. We don’t sell it, share it with advertisers, or use it for advertising. Activity is only used to show you your child’s dashboard and suggest activities.</p>
+      <p>The website never labels or diagnoses children. The dashboard shows what a child has played, not what they can or can’t do.</p>
+      <h3>Where it is stored</h3>
+      <p>Accounts and activity are stored with our database provider, Supabase, which processes the data on our behalf.</p>
+      ${placeholder('Owner to confirm', 'Add the Supabase region your project uses (for example London or Frankfurt), how long data is kept, and your contact details for privacy requests.')}
+      <h3>Your choices</h3>
+      <ul>
+        <li>You can edit or remove any child’s profile at any time. Removing a child deletes all of their activity.</li>
+        <li>You can delete your whole account from the Account page. This permanently deletes you, your children’s profiles and all of their activity.</li>
+      </ul>
+      <p>The site also saves a few small preferences in your browser, such as which child is playing on this device. They stay on your device.</p>`
+          : site.formEndpoint
+            ? `<p>When you send us a message or register your interest, we receive the details you type into the form so we can reply. We don’t sell your details or use them for advertising.</p>`
+            : `<p>This website does not currently ask for or store any personal information. There are no accounts and no sign-up forms.</p>`
       }
-      <p>Our games are designed for children and should not ask children for personal information.</p>
+      <p>Our games are designed for children and do not ask children for personal information.</p>
       <p>The site loads its fonts from Google Fonts, which means your browser connects to Google’s servers to download them.</p>
     </div></section>`,
 };

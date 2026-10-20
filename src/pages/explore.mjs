@@ -1,4 +1,5 @@
 import { studios } from '../data/studios.mjs';
+import { accountsEnabled } from '../config.mjs';
 import { games, gamesFor } from '../data/games.mjs';
 import { printables } from '../data/resources.mjs';
 import { button, sectionHead, statusPill, esc } from '../components/layout.mjs';
@@ -65,6 +66,7 @@ const grownUps = () => `
 export const studioPages = studios.map((s) => ({
   path: `explore/${s.id}/`,
   title: `${s.name}: ${s.subtitle}`,
+  studio: s.id,
   description: `${s.name} is the Learning Lanterns studio for ${s.subtitle.toLowerCase()}. ${s.summary}`,
   body: (h) => {
     const list = gamesFor(s.id);
@@ -148,6 +150,8 @@ export const gamePages = games.map((g) => {
   return {
     path: g.page,
     title: `${g.title} · ${s.name} maths game`,
+    studio: s.id,
+    scripts: accountsEnabled ? ['assets/js/track.js'] : [],
     description: `${g.description} A free Learning Lanterns maths game in the ${s.name}.`,
     body: (h) => `
     <section class="play-hero tone-${s.tone}" aria-labelledby="page-title">
@@ -160,7 +164,8 @@ export const gamePages = games.map((g) => {
             <p class="lead">${esc(g.description)}</p>
           </div>
         </div>
-        <div class="game-frame">
+        ${accountsEnabled ? '<div class="player-bar" data-player-bar hidden></div>' : ''}
+        <div class="game-frame" data-track-game="${g.slug}" data-studio="${s.id}">
           <iframe src="${h(g.href)}" title="${esc(g.title)} game" allow="autoplay; fullscreen" loading="eager"></iframe>
         </div>
         <div class="play-tools">

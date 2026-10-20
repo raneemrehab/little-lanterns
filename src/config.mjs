@@ -28,4 +28,16 @@ export const site = {
   // toy-interest and school-enquiry forms appear. When null, no form is
   // shown, so visitors never fill in a form that goes nowhere.
   formEndpoint: null,
+
+  // Parent accounts and progress tracking run on Supabase (supabase.com).
+  // Paste your project's URL and its public "anon" key here, after running
+  // the SQL in supabase/migrations/ (see docs/ACCOUNTS.md). The anon key is
+  // meant to be public: the database's own rules keep each family's data
+  // private. Leave both null and the account features stay switched off.
+  // LL_SUPABASE_URL / LL_SUPABASE_ANON_KEY environment variables override
+  // these at build time.
+  supabaseUrl: process.env.LL_SUPABASE_URL || null,
+  supabaseAnonKey: process.env.LL_SUPABASE_ANON_KEY || null,
 };
+
+export const accountsEnabled = Boolean(site.supabaseUrl && site.supabaseAnonKey);
