@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Split the Jar · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.splits{display:flex;align-items:center;gap:3cqmin;color:#fffdf8}
+.jar{all:unset;position:relative;width:24cqmin;height:26cqmin;border-radius:4cqmin 4cqmin 3cqmin 3cqmin;background:rgba(220,236,246,.18);border:.7cqmin solid rgba(255,253,248,.8);border-top:2.4cqmin solid #c99a5e;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:1.4cqmin;padding:1.6cqmin;box-sizing:border-box}
+.jar.ten{display:grid;grid-template-columns:repeat(5,4.4cqmin);grid-auto-rows:4.4cqmin;width:32cqmin}
+.jar.covered::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;background:#3b3355;border-radius:3cqmin;font:800 10cqmin/1 var(--display);color:#fffdf8}
+.jar.glow{box-shadow:0 0 6cqmin 2cqmin rgba(245,213,122,.8)}
+.ff{display:inline-block;width:5cqmin;height:5cqmin;border-radius:50%;background:radial-gradient(circle,#fff7c2 0 30%,#f5d57a 45%,rgba(245,213,122,0) 72%);box-shadow:0 0 2cqmin rgba(245,213,122,.7);animation:pop .3s ease both}
+.ff.dim{opacity:.25;box-shadow:none}
+.sum{font:800 6cqmin/1 var(--display);color:#fffdf8;min-height:6cqmin}
+.plus{font:800 6cqmin/1 var(--display)}
+.nums .opt{min-width:13cqmin;min-height:12cqmin;font:800 6.5cqmin/1 var(--display)}
+.found{display:flex;gap:2cqmin;flex-wrap:wrap;justify-content:center;font:800 3.6cqmin/1 var(--body)}
+.found span{background:rgba(255,253,248,.9);color:#263238;padding:1cqmin 2cqmin;border-radius:999px}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Split the Jar (proposed · Number Foundations): making and breaking numbers. Voice: LL-LIT-G28-VO01…VO10, shared
+   narrator lines and the maths number words (NUM-n). Only "They make five!" is recorded among the totals, so other
+   totals are said with the number word. */
+(() => {
+  const levels = [
+    { label: '1 · Beacon (5–6)', mode: 'part', wholes: [3, 4, 5] },
+    { label: '2 · Beacon (5–6)', mode: 'ways', whole: 5 },
+    { label: '3 · Beacon (6–7)', mode: 'part', wholes: [10], ten: true },
+    { label: '4 · Beacon (6–7)', mode: 'whole' },
+  ];
+  let plan = [], found = [];
+  const flies = (n, dim = 0) => '<i class="ff"></i>'.repeat(n) + '<i class="ff dim"></i>'.repeat(dim);
+
+  LL.game({
+    code: 'G28', name: 'Split the Jar', accent: '#3e8a86', dark: true,
+    guide: { name: 'Flick the firefly', kind: 'firefly', color: '#f5d57a' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #2f4f6b 0%, #223a52 60%, #182a3d 100%)',
+    reward: { icon: '🫙' }, doneLine: 'You found every way!',
+    levels, rounds: (lv) => (levels[lv].mode === 'ways' ? 4 : 5), intro: ['VO01'], goodbye: 'VO10',
+    complete: ['VO09', 'SH-VO03'],
+    preload: () => [...Object.keys(window.LL_LINES).filter((k) => k.startsWith('G28-') || k.startsWith('SH-')), ...Array.from({ length: 11 }, (_, n) => 'NUM-' + n)],
+    async levelStart(c) {
+      const L = c.L; plan = []; found = [];
+      for (let k = 0; k < 5; k++) {
+        if (L.mode === 'whole') { const a = 1 + Math.floor(Math.random() * 5), b = 1 + Math.floor(Math.random() * 4); plan.push({ a, b, n: a + b }); }
+        else { const n = L.wholes ? L.wholes[k % L.wholes.length] : 5; const a = 1 + Math.floor(Math.random() * (n - 1)); plan.push({ a, b: n - a, n }); }
+      }
+      await c.say('VO02', 'instruction');                           // Some fireflies are in this jar. How many are in the other one?
+    },
+    async round(c, i) {
+      const L = c.L;
+      if (L.mode === 'ways') return waysRound(c, i);
+      const { a, b, n } = plan[i];
+      const ja = c.el(`<div class="jar ${L.ten ? 'ten' : ''}" aria-label="Jar with ${a}"></div>`);
+      const jb = c.el(`<div class="jar ${L.ten ? 'ten' : ''}" aria-label="Other jar"></div>`);
+      const splits = c.el(`<div class="splits"></div>`); splits.append(ja, c.el('<span class="plus">+</span>'), jb);
+      const sum = c.el(`<div class="sum"></div>`);
+      c.area.replaceChildren(sum, splits);
+      // the fireflies fly in
+      await c.busy(async () => {
+        for (let k = 0; k < a; k++) { ja.insertAdjacentHTML('beforeend', '<i class="ff"></i>'); c.sfx.tick(k); await c.wait(220); }
+        if (L.mode === 'whole') { for (let k = 0; k < b; k++) { jb.insertAdjacentHTML('beforeend', '<i class="ff"></i>'); c.sfx.tick(k + a); await c.wait(220); } }
+        else { jb.classList.add('covered'); sum.textContent = `${n} fireflies`; }
+      });
+      const ans = L.mode === 'whole' ? n : b;
+      const opts = LL.shuffle([ans, ans > 1 ? ans - 1 : ans + 2, ans + 1]);
+      const row = c.el(`<div class="row nums"></div>`);
+      const items = opts.map((v) => { const e = c.el(`<button class="opt" type="button" aria-label="${v}">${v}</button>`); row.appendChild(e); return { el: e, ok: v === ans }; });
+      c.area.appendChild(row);
+      const ask = L.mode === 'whole' ? 'VO05' : 'VO03';
+      c.setPrompt(() => c.say(ask, 'question'));
+      await c.say(ask, 'question');                                  // How many in the other jar? / How many altogether?
+      if (i === 0) await c.hearAgainTip();
+      await c.choice({
+        items, reduce: false, miss1: null, miss2: null, miss3: null,
+        onMiss: async () => {                                        // the fireflies fly over one by one, counted
+          await c.say('VO06', 'retry');                              // Let's count the fireflies that fly over.
+          if (L.mode === 'whole') { const all = [...ja.children, ...jb.children]; for (let k = 0; k < all.length; k++) { c.restart(all[k], 'bounce'); await c.say('NUM-' + (k + 1), 'count'); } }
+          else { jb.classList.remove('covered'); jb.innerHTML = ''; for (let k = 1; k <= b; k++) { jb.insertAdjacentHTML('beforeend', '<i class="ff"></i>'); await c.say('NUM-' + k, 'count'); } }
+          await c.say(ask, 'question');
+        },
+      });
+      await c.busy(async () => {
+        jb.classList.remove('covered'); if (!jb.children.length) jb.innerHTML = flies(b);
+        ja.classList.add('glow'); jb.classList.add('glow');
+        sum.textContent = `${a} and ${b} make ${n}`;
+        if (n === 5) await c.say('VO07', 'praise');                  // They make five!
+        else await c.say('NUM-' + n, 'praise');
+      });
+    },
+  });
+
+  // Level 2: move fireflies between the jars (tap a firefly to send it across) to find every way to split five.
+  async function waysRound(c, i) {
+    let a = found.length ? 5 - found[found.length - 1] : 5;
+    const ja = c.el(`<button class="jar" type="button" aria-label="Left jar"></button>`);
+    const jb = c.el(`<button class="jar" type="button" aria-label="Right jar"></button>`);
+    const splits = c.el(`<div class="splits"></div>`); splits.append(ja, c.el('<span class="plus">+</span>'), jb);
+    const list = c.el(`<div class="found"></div>`);
+    const ok = c.el(`<button class="btn go" type="button" aria-label="This way">✓ This way</button>`);
+    const draw = () => { ja.innerHTML = flies(a); jb.innerHTML = flies(5 - a); list.innerHTML = found.map((x) => `<span>${x} + ${5 - x}</span>`).join(''); };
+    draw();
+    c.area.replaceChildren(splits, ok, list);
+    c.setPrompt(() => c.say('VO04', 'question'));
+    await c.say('VO04', 'question');                                 // Can you find another way to split them?
+    for (;;) {
+      ok.dataset.ok = found.includes(a) || a === 0 || a === 5 ? '0' : '1';
+      ja.dataset.ok = '0'; jb.dataset.ok = '0';
+      if (ok.dataset.ok === '0') { const want = [1, 2, 3, 4].find((x) => !found.includes(x)); (want < a ? ja : jb).dataset.ok = '1'; }
+      const t = await c.tap([ja, jb, ok], { nudge: [ja, jb] });
+      if (t === ja && a > 0) { a--; c.sfx.tick(a); draw(); continue; }
+      if (t === jb && a < 5) { a++; c.sfx.tick(a); draw(); continue; }
+      if (t !== ok) continue;
+      if (a > 0 && a < 5 && !found.includes(a)) {
+        found.push(a);
+        await c.busy(async () => { draw(); ja.classList.add('glow'); jb.classList.add('glow'); c.sfx.chime(); await c.say('VO08', 'praise'); await c.say('VO07', 'praise'); });   // A new way! They make five!
+        return;
+      }
+      await c.busy(async () => { c.sfx.soft(); c.restart(ok, 'wiggle'); await c.say('VO04', 'question'); });
+    }
+  }
+})();
+</script>
+</body>
+</html>

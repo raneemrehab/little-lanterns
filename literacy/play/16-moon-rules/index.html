@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moon Rules · Learning Lanterns</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap">
+<link rel="stylesheet" href="../shared/engine.css">
+<style>
+.moon{display:flex;align-items:center;gap:2cqmin;font:800 5cqmin/1 var(--display);background:#fffdf8;color:#263238;padding:1.8cqmin 4cqmin;border-radius:999px;box-shadow:0 0 6cqmin rgba(255,253,248,.5)}
+.moon.pulse{animation:glow 1s ease-in-out 3 alternate}
+.moon .em{font-size:6cqmin}
+.baskets{display:flex;gap:10cqmin;align-items:flex-end}
+.basket{all:unset;position:relative;display:grid;place-items:center;width:24cqmin;height:16cqmin;border-radius:1.5cqmin 1.5cqmin 8cqmin 8cqmin;background:repeating-linear-gradient(90deg,#d9b07a 0 2cqmin,#c99a5e 2cqmin 4cqmin);cursor:pointer}
+.basket .sample{position:absolute;top:-9cqmin;transform:scale(.8)}
+.card{width:15cqmin;height:15cqmin;border-radius:2.4cqmin;background:#fffdf8;display:grid;place-items:center;box-shadow:0 1cqmin 0 rgba(0,0,0,.14)}
+.card.border{box-shadow:0 0 0 1.2cqmin #f5d57a,0 1cqmin 0 rgba(0,0,0,.14)}
+.shp{display:block}
+.shp.circle{width:9cqmin;height:9cqmin;border-radius:50%}
+.shp.tri{width:0;height:0;border-left:5.5cqmin solid transparent;border-right:5.5cqmin solid transparent;border-bottom:9cqmin solid var(--c);background:none!important}
+.hand{min-height:17cqmin;display:grid;place-items:center}
+.hand .opt{padding:0;min-width:0;min-height:0;background:none;box-shadow:none}
+</style>
+</head>
+<body>
+<script src="../../../games/shared/voice-timing.js"></script>
+<script src="../audio/manifest.js"></script>
+<script src="../shared/critters.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+/* Moon Rules (Main · Thinking Control): switching rules (card sorting by colour or shape).
+   Voice: LL-LIT-G16-VO01…VO12 and the shared narrator lines. Each card matches one basket by colour and the
+   other by shape, so the moon's rule always decides. */
+(() => {
+  const COL = { red: '#e7836c', blue: '#4f8fbf' };
+  const shape = (s, c) => `<span class="shp ${s}" style="--c:${COL[c]};background:${COL[c]}"></span>`;
+  const cardHTML = (k) => `<span class="card${k.border ? ' border' : ''}">${shape(k.s, k.c)}</span>`;
+  const BASKETS = [{ s: 'circle', c: 'red', name: 'red circle basket' }, { s: 'tri', c: 'blue', name: 'blue triangle basket' }];
+  // rules per card for each level
+  const levels = [
+    { label: '1 · Glow (3–4)', rules: ['colour', 'colour', 'colour', 'colour', 'colour'] },
+    { label: '2 · Flame (4–5)', rules: ['shape', 'shape', 'shape', 'colour', 'colour', 'colour'] },
+    { label: '3 · Beacon (5–7)', rules: ['shape', 'shape', 'shape', 'colour', 'colour', 'colour', 'shape', 'shape', 'shape'] },
+    { label: '4 · Lighthouse (7–9)', rules: ['colour', 'colour', 'colour', 'colour', 'shape', 'shape', 'shape', 'shape'], border: true },
+  ];
+  let deck = [], switched = false;
+  const RULE_LINE = { colour: 'VO03', shape: 'VO04' }, WRONG_LINE = { colour: 'VO07', shape: 'VO08' };
+
+  LL.game({
+    code: 'G16', name: 'Moon Rules', accent: '#d06a52', dark: true,
+    guide: { name: 'Nova the cat', kind: 'cat', color: '#4a4a6a' },
+    bg: 'radial-gradient(120% 90% at 50% 0%, #3e3a6e 0%, #2b2852 60%, #1e1c3c 100%)',
+    reward: { icon: '🌙' }, doneLine: 'You followed every moon rule!',
+    levels, rounds: (lv) => levels[lv].rules.length, intro: ['VO01'], goodbye: 'VO12',
+    complete: ['VO11', 'SH-VO03'],
+    preload: () => Object.keys(window.LL_LINES).filter((k) => k.startsWith('G16-') || k.startsWith('SH-')),
+    async levelStart(c) {
+      const L = c.L;
+      deck = L.rules.map((rule, k) => {
+        const flip = Math.random() < 0.5;
+        return { s: flip ? 'circle' : 'tri', c: flip ? 'blue' : 'red', border: !!L.border && k % 3 === 2, rule };
+      });
+      await c.say('VO02', 'instruction');                           // Look at the moon. Sort each card the way the moon says.
+      await c.dragTip();
+    },
+    async round(c, i) {
+      const k = deck[i], rule = k.border ? (k.rule === 'colour' ? 'shape' : 'colour') : k.rule;   // bordered cards use the other rule
+      const moonRule = deck[i].rule;
+      const moon = c.el(`<div class="moon" aria-live="polite"><span class="em">🌙</span><span>${moonRule === 'colour' ? 'Colour' : 'Shape'}</span></div>`);
+      const baskets = BASKETS.map((b) => c.el(`<button class="basket drop" type="button" aria-label="${b.name}"><span class="sample">${cardHTML(b)}</span></button>`));
+      const row = c.el(`<div class="baskets"></div>`); baskets.forEach((b) => row.appendChild(b));
+      const piece = c.el(`<button class="opt" type="button" aria-label="${k.c} ${k.s === 'tri' ? 'triangle' : 'circle'} card">${cardHTML(k)}</button>`);
+      const hand = c.el(`<div class="hand"></div>`); hand.appendChild(piece);
+      c.area.replaceChildren(moon, hand, row);
+      const right = BASKETS.findIndex((b) => (rule === 'colour' ? b.c === k.c : b.s === k.s));
+      piece.dataset.piece = '1'; piece.dataset.target = BASKETS[right].name;    // used by the automated tests
+
+      const newRule = i === 0 || deck[i - 1].rule !== moonRule;
+      if (newRule) {
+        await c.busy(async () => {
+          if (i > 0) { moon.classList.add('pulse'); await c.say('VO05', 'transition'); switched = true; }   // The moon changed! New rule.
+          await c.say(RULE_LINE[moonRule], 'instruction');
+        });
+      }
+      c.setPrompt(async () => { await c.say(RULE_LINE[moonRule], 'transition'); await c.say('VO06', 'question'); });
+      if (c.L.border) c.setClue(() => c.say('VO09', 'instruction'));
+      await c.say('VO06', 'question');                               // Where does this card go?
+      if (i === 0) await c.hearAgainTip();
+      for (;;) {
+        const { target } = await c.place({ pieces: [piece], targets: baskets });
+        if (baskets.indexOf(target) === right) {
+          await c.busy(async () => {
+            target.appendChild(piece); piece.style.position = 'absolute'; piece.style.transform = 'scale(.7)'; c.sfx.pop(); c.sparkle(target);
+            if (switched) { switched = false; await c.say('VO10', 'praise'); }   // You switched rules!
+            else { c.sfx.chime(); await c.wait(500); }
+          });
+          return;
+        }
+        await c.busy(async () => {
+          c.sfx.soft(); c.restart(target, 'wiggle'); moon.classList.remove('pulse'); void moon.offsetWidth; moon.classList.add('pulse');
+          await c.say(k.border ? 'VO09' : WRONG_LINE[rule], 'retry');   // The moon says colour now. (the card returns)
+        });
+      }
+    },
+  });
+})();
+</script>
+</body>
+</html>

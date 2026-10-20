@@ -1,0 +1,516 @@
+<title>Learning Lanterns Game Designs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
+<style>
+/* Layout: a review book. Sticky tab bar; Gallery = index grid, then one spread per game (screens left, notes right).
+   Game screens use the fixed Little Lanterns game palette in both themes; the review chrome follows the theme. */
+:root{
+  --bg:#fbf6ec; --paper:#fffdf8; --ink:#263238; --soft:#56626a; --line:#e8dfcf; --accent:#5d4f8f; --accent-soft:#ece7f7; --butter:#f5d57a; --butter-soft:#fbefc8; --ok:#2c6b68; --warn:#8a6a12;
+  --display:'Bricolage Grotesque','Nunito Sans',system-ui,sans-serif; --body:'Nunito Sans','Segoe UI',system-ui,sans-serif;
+  /* game palette (fixed) */
+  --g-paper:#fffdf8; --g-ink:#263238; --g-line:#e8dfcf; --g-butter:#f5d57a; --g-teal:#3e8a86; --g-coral:#e7836c; --g-lilac:#ae9fd8;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1b24; --paper:#26232f; --ink:#ece7f7; --soft:#b4adc4; --line:#3a3647; --accent:#c4b8ef; --accent-soft:#332e45; --butter-soft:#3d3522; --ok:#8fcfc9; --warn:#e8c76a; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1b24; --paper:#26232f; --ink:#ece7f7; --soft:#b4adc4; --line:#3a3647; --accent:#c4b8ef; --accent-soft:#332e45; --butter-soft:#3d3522; --ok:#8fcfc9; --warn:#e8c76a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1240px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,44px);line-height:1.05}
+h2{font-size:24px}
+h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);font-family:var(--body);font-weight:800}
+p{margin:0}
+a{color:var(--accent)}
+.lede{color:var(--soft);max-width:70ch;margin-top:8px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-weight:700}
+.stats span b{font-family:var(--display);font-size:20px;margin-right:4px}
+.notice{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--butter-soft);max-width:90ch}
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;padding:12px 0 10px;margin-top:16px;border-bottom:1px solid var(--line)}
+.tabs button{flex:0 0 auto;border:0;background:none;color:var(--soft);font:800 15px/1 var(--body);padding:10px 14px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.tabs button:focus-visible,.chipf:focus-visible,.idx a:focus-visible{outline:3px solid var(--butter);outline-offset:2px}
+.view{padding-top:18px}
+/* filter + index */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chipf{border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 12px;font:700 13px var(--body);cursor:pointer;display:flex;gap:6px;align-items:center}
+.chipf i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chipf[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.idx{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:28px}
+.idx a{display:flex;gap:8px;align-items:center;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:6px 8px;min-width:0}
+.idx a svg{width:34px;height:34px;flex:0 0 auto}
+.idx a span{min-width:0;font-weight:700;font-size:13px;line-height:1.2}
+.idx a small{display:block;color:var(--soft);font-weight:600;font-variant-numeric:tabular-nums}
+.idx a .stripe{width:4px;align-self:stretch;border-radius:2px;background:var(--c);flex:0 0 auto}
+/* game spread */
+.game{border-top:2px solid var(--ink);padding:18px 0 34px;scroll-margin-top:70px}
+.ghead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.gnum{font:800 40px/1 var(--display);color:var(--c);font-variant-numeric:tabular-nums}
+.gname{font-size:30px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{font-weight:800;font-size:12px;letter-spacing:.04em;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--ink)}
+.pill.s{background:var(--c);color:#fff}
+.pill.st{background:var(--butter-soft)}
+.gnote{margin-top:10px;padding:8px 12px;border-left:4px solid var(--butter);background:var(--paper);border-radius:0 10px 10px 0;max-width:90ch}
+.spread{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;margin-top:16px;align-items:start}
+@media (max-width:900px){.spread{grid-template-columns:1fr}}
+.frames{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:12px;align-items:start;align-content:start}
+.small4 figure{cursor:zoom-in}
+.small4 figure:focus-visible{outline:3px solid var(--butter);outline-offset:3px;border-radius:12px}
+.frames .small4{grid-column:1 / -1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.frames{grid-template-columns:1fr}.frames .small4{grid-template-columns:repeat(2,minmax(0,1fr))}.phone{max-width:170px}}
+figure{margin:0;min-width:0}
+figcaption{font-size:12px;font-weight:800;color:var(--soft);letter-spacing:.05em;text-transform:uppercase;margin-top:5px}
+.notes{display:grid;grid-template-columns:1fr;gap:12px;min-width:0}
+.notes section{min-width:0}
+.notes p,.notes li{font-size:14px}
+.notes ul{margin:4px 0 0;padding-left:18px}
+.lv{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.lv td{border-top:1px solid var(--line);padding:5px 6px 5px 0;vertical-align:top}
+.lv td:first-child{white-space:nowrap;font-weight:800;padding-right:10px}
+.six{counter-reset:s}
+.six section h3::before{counter-increment:s;content:counter(s) ". "}
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th,table.t td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t th{position:sticky;top:0;background:var(--paper);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+table.t td.n{font-variant-numeric:tabular-nums;font-weight:800}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:800;font-size:12px;white-space:nowrap;background:var(--accent-soft)}
+.badge.ok{background:var(--ok);color:var(--bg)}
+.badge.wait{background:var(--butter-soft);color:var(--ink)}
+code{font-size:12px;word-break:break-all}
+details{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:8px}
+summary{cursor:pointer;padding:10px 14px;font-weight:800}
+details .tbl{border:0;border-top:1px solid var(--line);border-radius:0}
+.search{width:100%;max-width:420px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:600 15px var(--body);margin:6px 0 10px}
+.issues li{margin-bottom:8px;max-width:90ch}
+.rm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.rm article{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.rm article h4{margin:0 0 6px;font-family:var(--display);font-size:17px}
+.rm dt{font-size:12px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;margin-top:6px}
+.rm dd{margin:0;font-size:14px}
+
+/* ================= GAME STAGE (fixed game palette) ================= */
+.stage{position:relative;width:100%;max-width:100%;aspect-ratio:16/10;container-type:size;border-radius:16px;overflow:hidden;color:var(--g-ink);font-family:var(--body);box-shadow:0 0 0 1px rgba(0,0,0,.08),0 6px 18px -8px rgba(0,0,0,.35);isolation:isolate}
+.stage.port{aspect-ratio:10/17.5;border-radius:18px}
+.s-bg{position:absolute;inset:0;z-index:-1}
+.stage.focus .s-bg{filter:saturate(.35) brightness(1.04)}
+.s-top{position:absolute;left:3cqmin;right:3cqmin;top:3cqmin;height:9cqmin;display:flex;align-items:center;gap:2cqmin}
+.sb{width:9cqmin;height:9cqmin;border-radius:50%;background:var(--g-paper);display:grid;place-items:center;font-size:4.4cqmin;box-shadow:0 .6cqmin 0 rgba(0,0,0,.12);flex:0 0 auto}
+.s-title{font:800 4.2cqmin/1 var(--display);background:var(--g-paper);padding:2cqmin 3cqmin;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.s-dots{margin-left:auto;display:flex;gap:1.2cqmin;background:rgba(255,253,248,.85);padding:2cqmin 2.4cqmin;border-radius:999px}
+.s-dots i{width:3cqmin;height:3cqmin;border-radius:50%;border:.5cqmin solid var(--g-butter);box-sizing:border-box}
+.s-dots i.on{background:var(--g-butter)}
+.stage.port .s-title{display:none}
+.s-guide{position:absolute;left:2cqmin;bottom:3cqmin;width:27%;display:flex;flex-direction:column;align-items:center}
+.s-guide svg{width:30cqmin;height:30cqmin}
+.bubble{position:absolute;left:3cqmin;top:15cqmin;width:27%;background:var(--g-paper);border-radius:3cqmin;padding:2.4cqmin 2.8cqmin;font:700 3.5cqmin/1.25 var(--body);box-shadow:0 .8cqmin 0 rgba(0,0,0,.1);display:flex;gap:1.5cqmin}
+.bubble .spk{flex:0 0 auto;width:6cqmin;height:6cqmin;border-radius:50%;background:var(--g-butter);display:grid;place-items:center;font-size:3.4cqmin}
+.s-play{position:absolute;left:32%;right:3%;top:14cqmin;bottom:5cqmin;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.8cqmin}
+.stage.port .s-guide{left:3cqmin;top:13cqmin;bottom:auto;width:30cqmin}
+.stage.port .s-guide svg{width:28cqmin;height:28cqmin}
+.stage.port .bubble{left:33cqmin;right:3cqmin;top:15cqmin;width:auto;font-size:4.2cqmin}
+.stage.port .s-play{left:3cqmin;right:3cqmin;top:45cqmin;bottom:16cqmin}
+.dark .s-play{color:#fffdf8}
+/* feedback banner */
+.s-fb{position:absolute;left:32%;right:3%;bottom:3cqmin;display:none;align-items:center;gap:2cqmin;padding:2cqmin 3cqmin;border-radius:999px;font:800 3.6cqmin/1.2 var(--body);background:var(--g-paper);box-shadow:0 .8cqmin 0 rgba(0,0,0,.12);z-index:3}
+.s-fb i{font-style:normal;width:7cqmin;height:7cqmin;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-size:4cqmin}
+.st-correct .s-fb,.st-retry .s-fb{display:flex}
+.st-correct .s-fb i{background:var(--g-butter)}
+.st-retry .s-fb i{background:#e6e0f5}
+.stage.port .s-fb{left:3cqmin;right:3cqmin;bottom:3cqmin;border-radius:4cqmin}
+/* options */
+.row{display:flex;flex-wrap:wrap;justify-content:center;gap:3cqmin;align-items:center}
+.row.tight{gap:1.5cqmin}
+.opt{all:unset;box-sizing:border-box;position:relative;background:var(--g-paper);color:var(--g-ink);border-radius:3.5cqmin;padding:1.6cqmin;min-width:17cqmin;min-height:17cqmin;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqmin;box-shadow:0 1cqmin 0 rgba(0,0,0,.14);transition:transform .2s}
+.pic{display:flex;flex-direction:column;align-items:center;line-height:1}
+.pic .em{font-size:12cqmin;line-height:1.1}
+.pic b{font-size:3cqmin}
+.st-correct .opt.ans{transform:translateY(-1.6cqmin) scale(1.05);box-shadow:0 0 0 1cqmin var(--g-paper),0 0 6cqmin 2cqmin rgba(245,213,122,.95)}
+.st-correct .opt.ans::after{content:"★";position:absolute;top:-2.6cqmin;right:-2.2cqmin;width:6.5cqmin;height:6.5cqmin;border-radius:50%;background:var(--g-butter);color:var(--g-ink);display:grid;place-items:center;font-size:4cqmin}
+.st-retry .opt.miss{transform:rotate(-5deg)}
+.st-retry .opt.miss::before,.st-retry .opt.miss::after{content:"";position:absolute;top:30%;width:1cqmin;height:40%;border-radius:1cqmin;border:.6cqmin solid #ae9fd8;border-color:#ae9fd8 transparent;}
+.st-retry .opt.miss::before{left:-3cqmin;border-left:.7cqmin solid #ae9fd8;border-radius:50% 0 0 50%;border-top:0;border-bottom:0}
+.st-retry .opt.miss::after{right:-3cqmin;border-right:.7cqmin solid #ae9fd8;border-radius:0 50% 50% 0;border-top:0;border-bottom:0}
+.opt.lit,.opt.found{box-shadow:0 0 0 .8cqmin var(--g-butter),0 1cqmin 0 rgba(0,0,0,.14)}
+.only-correct{display:none!important}
+.st-correct .only-correct{display:block!important}
+.tag{font:800 2.6cqmin/1 var(--body);letter-spacing:.06em;text-transform:uppercase;background:rgba(38,50,56,.75);color:#fffdf8;padding:1cqmin 1.8cqmin;border-radius:999px}
+.target{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.2cqmin;background:var(--g-paper);color:var(--g-ink);border-radius:4cqmin;padding:2cqmin 3cqmin;box-shadow:0 0 0 1cqmin rgba(245,213,122,.55)}
+.target.small{padding:1.5cqmin 2.5cqmin;font-size:7cqmin}
+.chip{font:800 3cqmin/1 var(--body);padding:1.8cqmin 3cqmin;border-radius:999px;background:var(--g-paper);color:var(--g-ink);box-shadow:0 .7cqmin 0 rgba(0,0,0,.14)}
+.chip.on{background:var(--g-teal);color:#fffdf8}
+.mtabs{display:flex;gap:1.5cqmin}
+.mtabs span{font:800 3cqmin/1 var(--body);padding:1.6cqmin 2.6cqmin;border-radius:999px;background:rgba(255,253,248,.25);color:#fffdf8}
+.mtabs span.on{background:var(--g-paper);color:var(--g-ink)}
+.letter{font:800 9cqmin/1 'Nunito Sans',sans-serif;color:var(--g-ink)}
+.num{font:800 8cqmin/1 var(--display)}
+/* game-specific pieces */
+.stone{border-radius:50% 46% 52% 44%/48% 52% 46% 50%;background:#d9d2ee}
+.target.stone{background:#efe9fb}
+.grass{background:#fffaf0;border-bottom:1.6cqmin solid #9fbf86}
+.binos{border-radius:999px 999px 4cqmin 4cqmin}
+.slot{background:#d9534f0d;border:.8cqmin solid #c2412f;background:#e7836c;min-width:16cqmin;border-radius:3cqmin 3cqmin 1.5cqmin 1.5cqmin}
+.slot .letter{background:var(--g-paper);border-radius:2cqmin;padding:.5cqmin 2.5cqmin}
+.parcel{background:#e9c99a;border:.6cqmin dashed #a97a3f}
+.screen{flex-direction:row;background:#263238;color:#fffdf8;gap:2.4cqmin;padding:3cqmin 4cqmin 8cqmin}
+.screen .tag{position:absolute;bottom:1.6cqmin;background:none;color:#9fc6d9;font-size:2.2cqmin;white-space:nowrap}
+.snd{width:9cqmin;height:9cqmin;border-radius:50%;background:#3e5560;color:transparent;display:grid;place-items:center;font:800 5cqmin/1 var(--body)}
+.snd.on{background:var(--g-butter);box-shadow:0 0 4cqmin rgba(245,213,122,.9)}
+.gear{border-radius:50%;border:1cqmin dotted #9fc6d9}
+.cauldron{background:#3b3355;color:#fffdf8;border-radius:4cqmin 4cqmin 50% 50%;padding:2cqmin 4cqmin 4cqmin}
+.boxes{display:flex;gap:1.2cqmin}
+.boxes span{width:9cqmin;height:9cqmin;border-radius:1.6cqmin;background:var(--g-paper);color:var(--g-ink);display:grid;place-items:center;font:800 6cqmin/1 var(--body)}
+.boxes span.empty{background:transparent;border:.6cqmin dashed #fffdf8}
+.bottle{display:grid;place-items:center;width:10cqmin;height:12cqmin;border-radius:2cqmin 2cqmin 4cqmin 4cqmin;background:#e6e0f5;font-size:7cqmin}
+.engine{flex-direction:row;background:#3e8a86;color:#fffdf8;border-radius:3cqmin 6cqmin 2cqmin 2cqmin;padding:2.4cqmin 5cqmin}
+.word{font:800 9cqmin/1 var(--body);letter-spacing:.05em}
+.dots3{display:flex;flex-direction:column;gap:.6cqmin}
+.dots3 i{display:block;width:2cqmin;height:2cqmin;border-radius:50%;background:var(--g-butter)}
+.carriage{border-bottom:2cqmin solid #546e7a;border-radius:2cqmin}
+.ticket{background:var(--g-paper);padding:1.4cqmin 3cqmin;font:700 4cqmin/1 var(--body);border-radius:1cqmin;transform:rotate(-2deg);box-shadow:0 .6cqmin 0 rgba(0,0,0,.12)}
+.pot{background:#5c5c66;color:#fffdf8;border-radius:2cqmin 2cqmin 6cqmin 6cqmin;padding:3cqmin 7cqmin}
+.chunk{font:800 9cqmin/1 var(--body)}
+.jar.letter{display:grid}
+.letter.jar{display:grid;place-items:center;min-width:11cqmin;height:11cqmin;border-radius:2cqmin;background:#fbefc8;font-size:6.5cqmin;padding:0 1cqmin}
+.page{background:var(--g-paper);padding:2.4cqmin 4cqmin;border-radius:2cqmin;font:700 4.4cqmin/1.3 var(--body);box-shadow:0 .8cqmin 0 rgba(0,0,0,.08)}
+.page mark{background:var(--g-butter);padding:0 1cqmin;border-radius:1cqmin}
+.jars{display:flex;gap:1.5cqmin}
+.jars span{font:700 2.8cqmin/1 var(--body);padding:2cqmin 2cqmin 1.4cqmin;background:rgba(255,253,248,.8);border-radius:1.5cqmin 1.5cqmin 3cqmin 3cqmin;border:.4cqmin solid #b8c9d6}
+.card{min-width:16cqmin}
+.card.sm{min-width:13cqmin;min-height:13cqmin}
+.card.sm .em{font-size:8cqmin}
+.script{background:var(--g-paper);padding:2.4cqmin 3.5cqmin;border-radius:2cqmin;font:700 4.6cqmin/1.4 var(--body)}
+.ph{padding:.3cqmin 1cqmin;border-radius:1cqmin}
+.ph.on{background:var(--g-butter)}
+.q{font:800 3.6cqmin/1 var(--body);background:rgba(255,253,248,.85);padding:1.4cqmin 2.6cqmin;border-radius:999px}
+.map{display:flex;gap:4cqmin;align-items:center;padding:1cqmin 3cqmin;border-bottom:1cqmin dashed #b7a27c}
+.stop{width:15cqmin;height:15cqmin;border-radius:50%;background:rgba(255,253,248,.7);display:grid;place-items:center;font:800 4cqmin/1 var(--body);border:.6cqmin dashed #8a6a52;text-align:center}
+.stop .em{font-size:6cqmin}
+.stop.now{background:var(--g-butter);border-style:solid}
+.trace{position:relative;width:40cqmin;height:40cqmin;background:rgba(255,255,255,.6);border-radius:4cqmin;display:grid;place-items:center}
+.ghost{font:800 36cqmin/1 'Nunito Sans',sans-serif;color:transparent;-webkit-text-stroke:.6cqmin #9ab3cc;text-stroke:.6cqmin #9ab3cc}
+.ink{position:absolute;font:800 36cqmin/1 'Nunito Sans',sans-serif;background:linear-gradient(90deg,#e7836c,#f5d57a,#93b795,#86bde3,#ae9fd8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.start{position:absolute;width:5cqmin;height:5cqmin;border-radius:50%;background:#4caf50;right:12cqmin;top:13cqmin;box-shadow:0 0 0 1.2cqmin rgba(76,175,80,.3)}
+.st-retry .start{box-shadow:0 0 0 2.4cqmin rgba(76,175,80,.45)}
+.arrow{position:absolute;font-style:normal;font:800 5cqmin/1 var(--body);color:#5d7fb8}
+.arrow.a1{left:7cqmin;top:9cqmin}.arrow.a2{right:6cqmin;top:20cqmin}
+.postcard{background:var(--g-paper);border-radius:2cqmin;padding:2cqmin 3cqmin;display:flex;gap:3cqmin;align-items:center;box-shadow:0 1cqmin 0 rgba(0,0,0,.1)}
+.postcard .em{font-size:9cqmin}
+.line{display:flex;gap:1cqmin;align-items:center;border-bottom:.4cqmin solid #b8a58c;padding-bottom:1cqmin}
+.tile{font:800 4.2cqmin/1 var(--body);background:#f1ece2;padding:1.4cqmin 2cqmin;border-radius:1.4cqmin}
+.tile.empty{background:none;border:.5cqmin dashed #8a8a8a;min-width:9cqmin}
+.tile.big{font-size:5cqmin;background:none}
+.card-dark{background:#fffdf8}
+.sky{display:grid;grid-template-columns:repeat(4,auto);gap:2.4cqmin}
+.lan{min-width:11cqmin;min-height:13cqmin;padding:.6cqmin;background:transparent;box-shadow:none}
+.lan svg{width:10cqmin;height:13cqmin}
+.big-ear{font-size:16cqmin;width:28cqmin;height:28cqmin;border-radius:50%}
+.stream{display:flex;gap:3cqmin;font-size:7cqmin;align-items:center}
+.stream span{opacity:.35}.stream span.now{opacity:1;font-size:10cqmin;filter:drop-shadow(0 0 2cqmin #f5d57a)}
+.route{display:flex;gap:2cqmin}
+.route span{width:7cqmin;height:7cqmin;border-radius:50%;background:var(--g-butter);color:var(--g-ink);display:grid;place-items:center;font:800 4cqmin/1 var(--body)}
+.route span.q{background:var(--g-paper)}
+.village{display:grid;grid-template-columns:repeat(3,auto);gap:2.4cqmin}
+.village .opt{min-width:13cqmin;min-height:13cqmin;background:#3d4b7a}
+.village .opt.lit{background:#5a5f8a}
+.house{font-size:8cqmin}
+.rule{font:800 5cqmin/1 var(--display);background:#fffdf8;color:#263238;padding:1.8cqmin 4cqmin;border-radius:999px;box-shadow:0 0 6cqmin rgba(255,253,248,.5)}
+.shape{font-size:10cqmin;line-height:1}
+.shape.red{color:#e7836c}.shape.blue{color:#4f8fbf}
+.basket{display:grid;place-items:center;width:20cqmin;height:13cqmin;border-radius:1.5cqmin 1.5cqmin 7cqmin 7cqmin;background:repeating-linear-gradient(90deg,#d9b07a 0 2cqmin,#c99a5e 2cqmin 4cqmin)}
+.flies{display:flex;gap:6cqmin;flex-wrap:wrap;justify-content:center}
+.flies .opt{background:transparent;box-shadow:none;min-width:12cqmin;min-height:12cqmin}
+.fly,.ff{display:inline-block;width:5cqmin;height:5cqmin;border-radius:50%;background:radial-gradient(circle,#fff7c2 0 30%,#f5d57a 45%,rgba(245,213,122,0) 72%);box-shadow:0 0 3cqmin 1cqmin rgba(245,213,122,.7)}
+.fly{width:7cqmin;height:7cqmin}
+.lbl{font:800 3.4cqmin/1 var(--body);background:#f1ece2;padding:.8cqmin 1.6cqmin;border-radius:1cqmin}
+.string{display:flex;gap:2cqmin;padding-top:3cqmin;border-top:.5cqmin solid #8a6a52;border-radius:50% 50% 0 0/3cqmin 3cqmin 0 0}
+.lamp{display:inline-block;width:8cqmin;height:10cqmin;border-radius:40% 40% 45% 45%;box-shadow:inset 0 -1.4cqmin 0 rgba(0,0,0,.15)}
+.lamp.r{background:#e7836c}.lamp.y{background:#f5d57a}.lamp.b{background:#86bde3}
+.lamp.q{background:none;border:.6cqmin dashed #8a6a52;display:grid;place-items:center;font:800 5cqmin/1 var(--body);box-shadow:none}
+.steps{display:flex;gap:2cqmin}
+.step{width:15cqmin;height:13cqmin;border-radius:2cqmin;background:rgba(255,253,248,.6);border:.5cqmin dashed #8a6a52;display:grid;place-items:center;font:800 5cqmin/1 var(--body)}
+.step.done{background:var(--g-paper);border-style:solid}
+.shadow{position:relative;width:28cqmin;height:28cqmin}
+.shadow .roof{position:absolute;left:0;top:0;width:0;height:0;border-left:14cqmin solid transparent;border-right:14cqmin solid transparent;border-bottom:12cqmin solid rgba(38,50,56,.25);outline:none}
+.shadow .body{position:absolute;left:3cqmin;top:12cqmin;width:22cqmin;height:16cqmin;background:#93b795;border-radius:.6cqmin}
+.st-correct .shadow .roof{border-bottom-color:#e7836c}
+.tri{width:0;height:0;border-left:6cqmin solid transparent;border-right:6cqmin solid transparent;border-bottom:9cqmin solid #e7836c}
+.circ{width:9cqmin;height:9cqmin;border-radius:50%;background:#86bde3}
+.sq{width:9cqmin;height:9cqmin;background:#f5d57a;border-radius:.6cqmin}
+.garden{display:flex;gap:3cqmin;flex-wrap:wrap;justify-content:center}
+.place{font:800 4cqmin/1.2 var(--body);text-align:center}
+.lanterns3{display:flex;gap:3cqmin}
+.lanterns3>span{width:18cqmin;height:18cqmin;border-radius:40%;background:#fbefc8;display:grid;place-items:center;box-shadow:0 0 5cqmin rgba(245,213,122,.6)}
+.lanterns3 .em{font-size:7cqmin}
+.lanterns3 .dim{background:#5a527a;box-shadow:none;color:#fffdf8;font:800 6cqmin/1 var(--body)}
+.face{font-size:8cqmin}
+.jar{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2.4cqmin;width:30cqmin;min-height:24cqmin;border-radius:5cqmin 5cqmin 4cqmin 4cqmin;background:rgba(220,236,246,.22);border:.8cqmin solid rgba(255,253,248,.8);box-shadow:none;align-content:center}
+.ff.n{width:7cqmin;height:7cqmin;display:grid;place-items:center;color:#263238;font:800 3.4cqmin/1 var(--body)}
+.jar.lid{border-top:3cqmin solid #c99a5e}
+.peek{position:absolute;bottom:-4.5cqmin;font:800 2.8cqmin/1 var(--body);background:var(--g-butter);color:#263238;padding:.8cqmin 2cqmin;border-radius:999px}
+.dots{font-size:5cqmin;letter-spacing:.4cqmin;color:#3e8a86}
+.nline{display:flex;gap:1.2cqmin;align-items:flex-end;border-bottom:1cqmin solid #b8a58c;padding:0 1cqmin}
+.post{display:grid;place-items:end center;width:5cqmin;height:15cqmin;background:linear-gradient(#5f8a64,#5f8a64) center/1cqmin 100% no-repeat;font:800 3cqmin/1 var(--body);position:relative}
+.post::before{content:"";position:absolute;top:-1cqmin;left:50%;transform:translateX(-50%);width:3.6cqmin;height:3.6cqmin;border-radius:50%;background:#fffdf8;border:.4cqmin solid #5f8a64}
+.post.lab{padding-bottom:0}
+.post.lab:not(:empty){color:#263238}
+.nline .opt{min-width:5.6cqmin;min-height:14cqmin;padding:.3cqmin;background:rgba(255,253,248,.4);box-shadow:none;border:.4cqmin dashed #5f8a64}
+.grids{display:flex;gap:5cqmin}
+.grid{display:grid;grid-template-columns:repeat(3,8cqmin);grid-auto-rows:8cqmin;gap:1cqmin;background:#8a6a52;padding:1.4cqmin;border-radius:2cqmin}
+.grid i,.grid .cell{display:block;background:#f1ece2;border-radius:.8cqmin;min-width:0;min-height:0;padding:0}
+.grid.model{outline:.8cqmin solid var(--g-butter)}
+.grid i.y,.glass.y{background:#f5d57a}.grid i.b,.glass.b{background:#86bde3}.grid i.r,.glass.r{background:#e7836c}
+.glass{display:inline-block;width:8cqmin;height:8cqmin;border-radius:1cqmin;box-shadow:0 .6cqmin 0 rgba(0,0,0,.14)}
+.st-correct .grid .cell.ans{background:#f5d57a}
+.splits{display:flex;align-items:center;gap:2.4cqmin;color:#fffdf8}
+.jar.sm{width:20cqmin;min-height:18cqmin}
+.jar.q{font:800 7cqmin/1 var(--body);color:#fffdf8}
+.plus{font:800 6cqmin/1 var(--display)}
+/* start + done screens */
+.s-start{position:absolute;inset:0;display:flex;gap:4cqmin;padding:6cqmin;align-items:center}
+.s-start .big{flex:0 0 auto}
+.s-start svg{width:44cqmin;height:44cqmin}
+.s-start .tx{display:flex;flex-direction:column;gap:2cqmin;min-width:0}
+.s-start h5{margin:0;font:800 9cqmin/.95 var(--display)}
+.dark .s-start h5,.dark .s-done h5{color:#fffdf8}
+.lvls{display:grid;grid-template-columns:1fr 1fr;gap:1.6cqmin}
+.lvls span{background:var(--g-paper);border-radius:2.4cqmin;padding:1.8cqmin 2.2cqmin;font:800 3.2cqmin/1.15 var(--body);box-shadow:0 .7cqmin 0 rgba(0,0,0,.12)}
+.lvls span:first-child{background:var(--acc);color:#fffdf8}
+.hear{align-self:flex-start;background:var(--g-butter);font:800 3.4cqmin/1 var(--body);padding:2cqmin 3cqmin;border-radius:999px}
+.stage.port .s-start{flex-direction:column;padding:8cqmin 5cqmin;justify-content:center}
+.stage.port .s-start svg{width:40cqmin;height:40cqmin}
+.s-done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.4cqmin;text-align:center;padding:4cqmin}
+.s-done .rw{font-size:16cqmin;line-height:1;filter:drop-shadow(0 0 4cqmin rgba(245,213,122,.9))}
+.s-done h5{margin:0;font:800 7cqmin/1 var(--display)}
+.s-done .five{display:flex;gap:1.6cqmin}
+.s-done .five i{width:5cqmin;height:6.5cqmin;border-radius:40%;background:var(--g-butter);box-shadow:0 0 2.4cqmin rgba(245,213,122,.9)}
+.s-done .btns{display:flex;gap:2cqmin}
+.s-done .btns span{background:var(--g-paper);padding:2cqmin 3cqmin;border-radius:999px;font:800 3.2cqmin/1 var(--body);box-shadow:0 .7cqmin 0 rgba(0,0,0,.12)}
+.s-done .btns span:first-child{background:var(--acc);color:#fffdf8}
+.s-done svg{position:absolute;left:3cqmin;bottom:3cqmin;width:22cqmin;height:22cqmin}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Learning Lanterns game designs</h1>
+    <p class="lede">Visual designs for all 28 games in the production tracker, for your review. Nothing here is playable and nothing has been built. Each game shows its start screen, a play screen, the right-answer and try-again states, the completion screen and a phone layout, with the learning design beside it. Tap a small screen to see it large.</p>
+    <div class="stats" id="stats"></div>
+    <p class="notice" id="mainNotice"></p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-v="gallery" aria-selected="true">Gallery</button>
+    <button role="tab" data-v="tracker" aria-selected="false">Tracker</button>
+    <button role="tab" data-v="voiceovers" aria-selected="false">Voiceover list</button>
+    <button role="tab" data-v="research" aria-selected="false">Research map</button>
+    <button role="tab" data-v="issues" aria-selected="false">To decide</button>
+  </nav>
+  <section class="view" id="v-gallery"><div class="filters" id="filters"></div><div class="idx" id="idx"></div><div id="games"></div></section>
+  <section class="view" id="v-tracker" hidden></section>
+  <section class="view" id="v-voiceovers" hidden></section>
+  <section class="view" id="v-research" hidden></section>
+  <section class="view" id="v-issues" hidden></section>
+</div>
+
+<script>
+/*GAMES_JS*/
+</script>
+<script>
+/*VO_JS*/
+</script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+/* scene helpers used by games.js */
+function P(e, lbl) { return `<span class="pic"><span class="em">${e}</span>${lbl ? `<b>${lbl}</b>` : ""}</span>`; }
+function O(inner, cls) { return `<button class="opt ${cls || ""}" tabindex="-1" aria-hidden="true">${inner}</button>`; }
+function row(...a) { return `<div class="row">${a.join("")}</div>`; }
+function tabs(a, i) { return `<div class="mtabs">${a.map((t, k) => `<span class="${k === i ? "on" : ""}">${t}</span>`).join("")}</div>`; }
+function lantern(sym) { return `<svg viewBox="0 0 40 52"><rect x="15" y="1" width="10" height="5" rx="2" fill="#8a6a52"/><path d="M8 10 Q20 4 32 10 L34 40 Q20 48 6 40 Z" fill="#f5d57a" stroke="#c99a5e" stroke-width="2"/><text x="20" y="32" text-anchor="middle" font-size="18" font-weight="800" fill="#8a6a12">${sym}</text></svg>`; }
+
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const m = v => Math.max(0, Math.min(255, Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f))); return `rgb(${m(r)},${m(g)},${m(b)})`; }
+/* One friendly character built from shared parts, so every guide shares a style. */
+function critter(g) {
+  const c = g.color, d = shade(c, -.32), l = shade(c, .55), k = g.kind, ink = "#263238";
+  let back = "", ears = "", over = "", face = "";
+  const eyes = (y = 40, r = 3.4) => `<circle cx="41" cy="${y}" r="${r}" fill="${ink}"/><circle cx="59" cy="${y}" r="${r}" fill="${ink}"/><circle cx="42.2" cy="${y - 1.2}" r="1.1" fill="#fff"/><circle cx="60.2" cy="${y - 1.2}" r="1.1" fill="#fff"/>`;
+  const cheeks = `<circle cx="35" cy="48" r="3.6" fill="#f2a5a0" opacity=".7"/><circle cx="65" cy="48" r="3.6" fill="#f2a5a0" opacity=".7"/>`;
+  const smile = `<path d="M45 49 Q50 54 55 49" stroke="${ink}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  const pointy = col => `<path d="M30 30 L33 10 L45 22 Z" fill="${col}"/><path d="M70 30 L67 10 L55 22 Z" fill="${col}"/>`;
+  const round = (col, r = 8) => `<circle cx="32" cy="21" r="${r}" fill="${col}"/><circle cx="68" cy="21" r="${r}" fill="${col}"/>`;
+  let body = `<ellipse cx="50" cy="72" rx="26" ry="22" fill="${c}"/><ellipse cx="50" cy="76" rx="15" ry="13" fill="${l}"/>`;
+  let head = `<circle cx="50" cy="42" r="23" fill="${c}"/>`;
+  face = eyes() + cheeks + smile;
+  switch (k) {
+    case "bat": back = `<path d="M26 64 Q6 50 4 70 Q14 66 18 76 Q24 70 30 78 Z" fill="${d}"/><path d="M74 64 Q94 50 96 70 Q86 66 82 76 Q76 70 70 78 Z" fill="${d}"/>`; ears = pointy(c); break;
+    case "zebra": ears = pointy(c); over = `<path d="M50 19 v8 M41 21 l2 7 M59 21 l-2 7" stroke="${ink}" stroke-width="3" stroke-linecap="round"/><path d="M28 66 h10 M62 66 h10 M30 78 h8 M62 78 h8" stroke="${ink}" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="51" rx="11" ry="7" fill="#d8cdbf"/>`; break;
+    case "bird": back = `<path d="M24 66 Q12 72 22 84 Q28 76 32 74 Z" fill="${d}"/><path d="M76 66 Q88 72 78 84 Q72 76 68 74 Z" fill="${d}"/>`; ears = `<path d="M48 18 Q52 8 56 16" stroke="${d}" stroke-width="3" fill="none"/>`; face = eyes() + cheeks + `<path d="M45 46 L55 46 L50 54 Z" fill="#f0a24a"/>`; break;
+    case "robot": head = `<rect x="27" y="20" width="46" height="40" rx="10" fill="${c}"/><rect x="33" y="28" width="34" height="22" rx="6" fill="#263238"/>`; ears = `<line x1="50" y1="20" x2="50" y2="9" stroke="${d}" stroke-width="3"/><circle cx="50" cy="8" r="4" fill="#f5d57a"/><rect x="21" y="34" width="6" height="12" rx="2" fill="${d}"/><rect x="73" y="34" width="6" height="12" rx="2" fill="${d}"/>`; body = `<rect x="28" y="58" width="44" height="34" rx="9" fill="${c}"/><circle cx="40" cy="72" r="4" fill="#f5d57a"/><circle cx="50" cy="72" r="4" fill="#e7836c"/><circle cx="60" cy="72" r="4" fill="#93b795"/>`; face = `<circle cx="42" cy="38" r="3.5" fill="#9fe7ff"/><circle cx="58" cy="38" r="3.5" fill="#9fe7ff"/><path d="M44 44 Q50 48 56 44" stroke="#9fe7ff" stroke-width="2" fill="none"/>`; break;
+    case "fox": ears = pointy(c) + `<path d="M33 26 L34.5 15 L41 21 Z" fill="${ink}" opacity=".5"/><path d="M67 26 L65.5 15 L59 21 Z" fill="${ink}" opacity=".5"/>`; over = `<path d="M30 44 Q50 70 70 44 Q60 52 50 52 Q40 52 30 44 Z" fill="#fffdf8"/><circle cx="50" cy="51" r="3" fill="${ink}"/>`; back = `<path d="M74 80 Q96 70 90 50 Q84 66 70 70 Z" fill="${c}"/><path d="M90 50 Q92 58 86 62 Q88 54 90 50" fill="#fffdf8"/>`; break;
+    case "otter": ears = round(d, 5); over = `<ellipse cx="50" cy="50" rx="10" ry="7" fill="${l}"/><circle cx="50" cy="47" r="2.6" fill="${ink}"/>`; break;
+    case "bear": ears = round(c, 8) + `<circle cx="32" cy="21" r="4" fill="${l}"/><circle cx="68" cy="21" r="4" fill="${l}"/>`; over = `<ellipse cx="50" cy="51" rx="9" ry="6.5" fill="${l}"/><circle cx="50" cy="48" r="2.6" fill="${ink}"/>`; break;
+    case "mouse": ears = round(c, 12) + `<circle cx="31" cy="20" r="7" fill="#f2c2c0"/><circle cx="69" cy="20" r="7" fill="#f2c2c0"/>`; over = `<circle cx="50" cy="50" r="2.6" fill="#e78c95"/>`; back = `<path d="M74 84 Q92 86 90 70" stroke="${d}" stroke-width="3" fill="none"/>`; break;
+    case "squirrel": back = `<path d="M70 88 Q100 80 92 50 Q86 30 70 40 Q84 50 76 66 Q70 76 64 82 Z" fill="${d}"/>`; ears = pointy(c); over = `<ellipse cx="50" cy="51" rx="8" ry="6" fill="${l}"/>`; break;
+    case "owl": head = `<ellipse cx="50" cy="44" rx="26" ry="24" fill="${c}"/>`; ears = `<path d="M28 30 L30 14 L40 24 Z" fill="${d}"/><path d="M72 30 L70 14 L60 24 Z" fill="${d}"/>`; face = `<circle cx="40" cy="41" r="9" fill="#fffdf8"/><circle cx="60" cy="41" r="9" fill="#fffdf8"/>` + eyes(41, 4.2) + `<path d="M46 49 L54 49 L50 56 Z" fill="#f0a24a"/>`; break;
+    case "badger": ears = round(c, 6); over = `<path d="M44 20 Q50 18 56 20 L54 52 Q50 56 46 52 Z" fill="#fffdf8"/><path d="M30 34 Q36 46 42 36 M70 34 Q64 46 58 36" stroke="${ink}" stroke-width="5" fill="none" opacity=".75"/><circle cx="50" cy="52" r="3" fill="${ink}"/>`; break;
+    case "firefly": back = `<ellipse cx="30" cy="54" rx="16" ry="11" fill="#dcecf6" opacity=".85"/><ellipse cx="70" cy="54" rx="16" ry="11" fill="#dcecf6" opacity=".85"/><circle cx="50" cy="82" r="14" fill="#fff3b0"/><circle cx="50" cy="82" r="20" fill="#f5d57a" opacity=".35"/>`; body = `<ellipse cx="50" cy="68" rx="16" ry="16" fill="#5b6b8f"/>`; head = `<circle cx="50" cy="42" r="20" fill="#5b6b8f"/>`; ears = `<path d="M42 24 Q38 10 32 10 M58 24 Q62 10 68 10" stroke="#5b6b8f" stroke-width="2.5" fill="none"/><circle cx="32" cy="10" r="3" fill="#f5d57a"/><circle cx="68" cy="10" r="3" fill="#f5d57a"/>`; face = `<circle cx="43" cy="41" r="6" fill="#fffdf8"/><circle cx="57" cy="41" r="6" fill="#fffdf8"/>` + eyes(41, 3) + `<path d="M45 50 Q50 54 55 50" stroke="#fffdf8" stroke-width="2" fill="none"/>`; break;
+    case "cat": ears = pointy(c); over = `<path d="M26 47 h10 M26 52 h10 M64 47 h10 M64 52 h10" stroke="${d}" stroke-width="1.5"/><path d="M48 47 L52 47 L50 50 Z" fill="#e78c95"/>`; back = `<path d="M74 84 Q96 84 90 60" stroke="${c}" stroke-width="6" fill="none" stroke-linecap="round"/>`; break;
+    case "raccoon": ears = pointy(c); over = `<path d="M28 40 Q40 32 50 42 Q60 32 72 40 Q66 50 50 46 Q34 50 28 40 Z" fill="${ink}" opacity=".7"/><circle cx="50" cy="51" r="3" fill="${ink}"/>`; back = `<path d="M72 82 Q96 78 92 56" stroke="${d}" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="6 5"/>`; face = eyes() + `<circle cx="41" cy="40" r="5.5" fill="#fffdf8" opacity=".25"/>` + smile; break;
+    case "panda": ears = round(ink, 8); over = `<ellipse cx="40" cy="41" rx="6.5" ry="8" fill="${ink}" transform="rotate(-20 40 41)"/><ellipse cx="60" cy="41" rx="6.5" ry="8" fill="${ink}" transform="rotate(20 60 41)"/><circle cx="50" cy="50" r="3" fill="${ink}"/>`; face = `<circle cx="41" cy="40" r="2.6" fill="#fff"/><circle cx="59" cy="40" r="2.6" fill="#fff"/>` + cheeks + smile; body = `<ellipse cx="50" cy="72" rx="26" ry="22" fill="${ink}"/><ellipse cx="50" cy="74" rx="17" ry="16" fill="${c}"/>`; break;
+    case "tortoise": back = `<path d="M20 78 Q24 46 50 46 Q76 46 80 78 Z" fill="#5f8a64"/><path d="M34 60 h32 M28 70 h44 M50 46 v32" stroke="#93b795" stroke-width="3"/>`; body = `<ellipse cx="50" cy="80" rx="30" ry="10" fill="${c}"/>`; head = `<circle cx="50" cy="34" r="17" fill="${c}"/>`; face = eyes(32, 3) + `<path d="M45 40 Q50 44 55 40" stroke="${ink}" stroke-width="2" fill="none"/>` + `<rect x="40" y="16" width="20" height="5" rx="2" fill="#8a6a52" opacity=".0"/>`; break;
+    case "snail": back = `<circle cx="62" cy="62" r="22" fill="#e7a65f"/><path d="M62 62 m-14 0 a14 14 0 1 1 14 14 a9 9 0 1 1 -9 -9 a5 5 0 1 1 5 5" stroke="#b9743a" stroke-width="3" fill="none"/>`; body = `<path d="M14 86 Q14 76 30 76 L88 82 Q90 88 80 88 Z" fill="#f2d6a8"/>`; head = `<circle cx="28" cy="58" r="15" fill="#f2d6a8"/>`; ears = `<path d="M24 45 L20 30 M32 45 L36 30" stroke="#f2d6a8" stroke-width="3"/><circle cx="20" cy="29" r="3" fill="#263238"/><circle cx="36" cy="29" r="3" fill="#263238"/>`; face = `<path d="M23 61 Q28 65 33 61" stroke="${ink}" stroke-width="2" fill="none"/><circle cx="23" cy="55" r="2" fill="${ink}"/><circle cx="33" cy="55" r="2" fill="${ink}"/>`; break;
+    case "hedgehog": back = `<path d="M22 50 L14 40 L26 40 L22 26 L34 32 L36 18 L44 28 L50 14 L56 28 L64 18 L66 32 L78 26 L74 40 L86 40 L78 50 L88 60 L76 62 L82 74 L70 70 Z" fill="${d}"/>`; head = `<circle cx="50" cy="46" r="20" fill="#f2d6a8"/>`; face = eyes(44, 3) + `<circle cx="50" cy="52" r="3" fill="${ink}"/>` + cheeks; break;
+  }
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="${esc(g.name)}">${back}${body}${ears}${head}${over}${face}</svg>`;
+}
+
+const LEVEL_NAMES = s => s.split(" · ")[1] || s;
+function stage(g, state, port) {
+  const acc = STRANDS[g.strand].accent;
+  const cls = `stage st-${state}${port ? " port" : ""}${g.dark ? " dark" : ""}`;
+  const top = `<div class="s-top"><span class="sb">⌂</span><span class="s-title">${esc(g.name.replace(" (proposed)", ""))}</span><span class="s-dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i < 2 ? "on" : ""}"></i>`).join("")}</span><span class="sb">🔊</span><span class="sb">☾</span></div>`;
+  let inner;
+  if (state === "start") {
+    inner = `<div class="s-start"><div class="big">${critter(g.guide)}</div><div class="tx"><h5>${esc(g.name.replace(" (proposed)", ""))}</h5><div class="lvls">${g.levels.map(l => `<span>${esc(l[0])}</span>`).join("")}</div><span class="hear">🔊 Hear how to play</span></div></div>`;
+  } else if (state === "done") {
+    inner = `<div class="s-done"><div class="rw">${g.reward.icon}</div><h5>${esc(g.doneLine)}</h5><div class="five">${"<i></i>".repeat(5)}</div><div class="btns"><span>Play again</span><span>Next level</span><span>☾ Rest</span></div>${critter(g.guide)}</div>`;
+  } else {
+    const fb = state === "correct" ? `<div class="s-fb"><i>★</i>${esc(g.correctLine)}</div>` : state === "retry" ? `<div class="s-fb"><i>👂</i>${esc(g.retryLine)}</div>` : "";
+    inner = top + `<div class="s-guide">${critter(g.guide)}</div><div class="bubble"><span class="spk">🔊</span><span>${esc(g.prompt)}</span></div><div class="s-play">${g.scene()}</div>` + fb;
+  }
+  return `<div class="${cls}" style="--acc:${acc}" role="img" aria-label="${esc(g.name)}: ${state} screen"><div class="s-bg" style="background:${g.bg}"></div>${inner}</div>`;
+}
+
+const pad = n => String(n).padStart(2, "0");
+const ROWS = voRows(GAMES, SHARED_VO, PHONEMES);
+const voCount = n => ROWS.filter(r => r.group === "G" + pad(n)).length;
+const visualOf = g => g.visual || "In review";
+
+/* ---------- header ---------- */
+document.getElementById("stats").innerHTML = [
+  [GAMES.length, "games designed"], [GAMES.length * 6, "screens"], [ROWS.length, "voiceover lines"], [0, "games built in this batch"],
+].map(([v, t]) => `<span><b>${v}</b>${t}</span>`).join("");
+document.getElementById("mainNotice").innerHTML = `<b>Read first:</b> your source tracker lists 28 games, but only <b>Games 1–12 are the Literacy curriculum</b>. Games 13–27 are the Main curriculum (attention, thinking, patterns, words and number) and Game 28 is a proposed number game. All 28 are designed here under their original names and numbers; see <a href="#issues" data-go="issues">To decide</a>.`;
+
+/* ---------- gallery ---------- */
+const filt = document.getElementById("filters");
+let current = "all";
+filt.innerHTML = [`<button class="chipf" aria-pressed="true" data-s="all">All 28</button>`, ...Object.entries(STRANDS).map(([k, s]) => `<button class="chipf" aria-pressed="false" data-s="${k}" style="--c:${s.accent}"><i></i>${s.label} (${GAMES.filter(g => g.strand === k).length})</button>`)].join("");
+document.getElementById("idx").innerHTML = GAMES.map(g => `<a href="#g${pad(g.n)}" data-s="${g.strand}" style="--c:${STRANDS[g.strand].accent}"><span class="stripe"></span>${critter(g.guide)}<span><small>${pad(g.n)}</small>${esc(g.name)}</span></a>`).join("");
+document.getElementById("games").innerHTML = GAMES.map(g => {
+  const s = STRANDS[g.strand];
+  return `<article class="game" id="g${pad(g.n)}" data-s="${g.strand}" style="--c:${s.accent}">
+  <div class="ghead"><span class="gnum">${pad(g.n)}</span><h2 class="gname">${esc(g.name)}</h2></div>
+  <div class="pills"><span class="pill s">${esc(g.area)}</span><span class="pill">${esc(g.age)}</span><span class="pill">${esc(g.skill)}</span><span class="pill st">Visual: ${esc(visualOf(g))}</span><span class="pill">Guide: ${esc(g.guide.name)}</span></div>
+  ${g.visualNote ? `<p class="gnote">${esc(g.visualNote)}</p>` : ""}
+  <div class="spread">
+    <div class="frames">
+      <figure class="main">${stage(g, "play")}<figcaption>Play screen · tablet and desktop</figcaption></figure>
+      <figure class="phone">${stage(g, "play", true)}<figcaption>Phone</figcaption></figure>
+      <div class="small4">
+        <figure tabindex="0" title="Show larger">${stage(g, "start")}<figcaption>Start and levels</figcaption></figure>
+        <figure tabindex="0" title="Show larger">${stage(g, "correct")}<figcaption>Right answer</figcaption></figure>
+        <figure tabindex="0" title="Show larger">${stage(g, "retry")}<figcaption>Try again</figcaption></figure>
+        <figure tabindex="0" title="Show larger">${stage(g, "done")}<figcaption>Complete</figcaption></figure>
+      </div>
+    </div>
+    <div class="notes">
+      <section><h3>Objective</h3><p>${esc(g.objective)}</p><p style="margin-top:4px;color:var(--soft)">Supporting: ${g.supporting.map(esc).join(" · ")}. Cognitive (source): ${esc(g.cog)}.</p></section>
+      <div class="six notes">
+        <section><h3>What the child does</h3><p>${esc(g.does)}</p></section>
+        <section><h3>What it practises</h3><p>${esc(g.practises)}</p></section>
+        <section><h3>How difficulty grows</h3><table class="lv">${g.levels.map(l => `<tr><td>${esc(l[0])}</td><td>${esc(l[1])}</td></tr>`).join("")}</table></section>
+        <section><h3>How feedback teaches</h3><p>${esc(g.feedback)}</p></section>
+        <section><h3>Research behind it</h3><p>None cited in the source tracker. Design rationale (not a research finding): ${esc(g.rationale)}</p></section>
+        <section><h3>Beyond the game</h3><p>${esc(g.transfer)}</p></section>
+      </div>
+      <section><h3>Visual elements</h3><p>${g.visuals.map(esc).join(" · ")}</p></section>
+      <section><h3>Accessibility</h3><ul>${g.a11y.map(a => `<li>${esc(a)}</li>`).join("")}<li>Plus the shared accessibility set (see Tracker tab).</li></ul></section>
+      <section><h3>Voiceover</h3><p>${voCount(g.n)} game lines${g.shared.length ? ` plus ${g.shared.length} shared narrator lines` : ""}${g.words ? `, ${g.words.length} word recordings` : ""}${g.phon ? `, ${g.phon.length} phonemes` : ""}. <a href="#voiceovers" data-go="voiceovers" data-open="G${pad(g.n)}">See the lines</a>.</p></section>
+    </div>
+  </div></article>`;
+}).join("");
+/* tap a small screen to swap it into the large slot */
+function swap(f) {
+  const main = f.closest(".frames").querySelector("figure.main");
+  const a = main.querySelector(".stage"), b = f.querySelector(".stage"), ca = main.querySelector("figcaption"), cb = f.querySelector("figcaption");
+  main.replaceChild(b, ca); f.insertBefore(a, cb); main.appendChild(ca);
+  const t = ca.textContent; ca.textContent = cb.textContent; cb.textContent = t;
+}
+document.getElementById("games").addEventListener("click", e => { const f = e.target.closest(".small4 figure"); if (f) swap(f); });
+document.getElementById("games").addEventListener("keydown", e => { const f = e.target.closest(".small4 figure"); if (f && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); swap(f); } });
+filt.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  current = b.dataset.s;
+  filt.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  document.querySelectorAll("#idx a, #games .game").forEach(el => el.hidden = current !== "all" && el.dataset.s !== current);
+});
+
+/* ---------- tracker ---------- */
+const trackerRow = g => {
+  const one = g.n === 1, prop = g.n === 28;
+  return [g.n, g.name, g.age, g.objective, g.cog, "None in source (see Research map)", one ? "Complete (approved earlier)" : "Complete", `Gallery #g${pad(g.n)} · literacy/index.html`,
+    one ? "Script ready (110 recordings, codes EC-01…); recordings pending" : "Required list prepared; recordings pending",
+    one ? "Approved" : prop ? "Awaiting your yes (proposed game)" : "Awaiting your review", one ? "Done" : "Not started", one ? "Done" : "Not started", one ? "Waiting for voiceovers" : "Not complete"];
+};
+const TH = ["#", "Game", "Age / level", "Primary objective", "Cognitive skills", "Research references", "Visual status", "Preview location", "Voiceover status", "Visual approval", "Game development", "Testing", "Final completion"];
+const badge = t => /^(Done|Approved|Complete)/.test(t) ? `<span class="badge ok">${esc(t)}</span>` : /Awaiting|pending|Not started|Not complete|Waiting/.test(t) ? `<span class="badge wait">${esc(t)}</span>` : esc(t);
+document.getElementById("v-tracker").innerHTML = `<h2>Master tracker</h2><p class="lede">Visual design is complete for all 28 and waiting for your review. No game in this batch has been built or tested. Game 1 keeps its earlier status from your production tracker.</p>
+<div class="tbl" style="margin-top:12px"><table class="t"><thead><tr>${TH.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${GAMES.map(g => `<tr>${trackerRow(g).map((v, i) => i === 0 ? `<td class="n">${v}</td>` : i >= 6 && i !== 7 ? `<td>${badge(v)}</td>` : `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+<h2 style="margin-top:28px">Shared design system</h2><div class="rm" style="margin-top:10px">
+<article><h4>Feedback</h4><p>${esc(COMMON.feedback)}</p></article>
+<article><h4>Layouts</h4><p>${esc(COMMON.layouts)}</p></article>
+<article><h4>Accessibility in every game</h4><ul>${COMMON.a11y.map(a => `<li>${esc(a)}</li>`).join("")}</ul></article>
+<article><h4>Look and type</h4><p>Existing Little Lanterns brand: Bricolage Grotesque headings, Nunito Sans text, cream and paper backgrounds, butter glow for success, soft lavender for 'try again' (never red). Each curriculum strand has its own accent; Literacy is lavender. Guides are drawn from one set of shared shapes so they belong together; Pip, Sunny and Hazel are existing characters.</p></article>
+<article><h4>Picture placeholders</h4><p>Pictures inside the mockups are emoji stand-ins for final illustrations in the Little Lanterns style. Early literacy pictures never show letters.</p></article></div>`;
+
+/* ---------- voiceovers ---------- */
+const voTable = rows => `<div class="tbl"><table class="t"><thead><tr><th>ID</th><th>Text to record</th><th>Trigger</th><th>Voice</th><th>Notes</th><th>Status</th><th>File</th></tr></thead><tbody>${rows.map(r => `<tr><td><code>${esc(r.id)}</code></td><td><b>${esc(r.text)}</b></td><td>${esc(r.trigger)}</td><td>${esc(r.voice)}</td><td>${esc(r.note)}</td><td>${esc(r.essential)}<br><small>${esc(r.status)}</small></td><td><code>${esc(r.file)}</code></td></tr>`).join("")}</tbody></table></div>`;
+const groups = [...GAMES.map(g => ["G" + pad(g.n), `${g.n}. ${g.name}`]), ["Shared", "Shared narrator lines"], ["Phonemes", "Phonemes (letter sounds)"], ["Words", "Word recordings"], ["Chunks", "Chunks (Chunk Kitchen)"]];
+document.getElementById("v-voiceovers").innerHTML = `<h2>Voiceover master list</h2>
+<p class="lede">${ROWS.length} lines across all 28 games. IDs follow <code>LL-LIT-G01-VO01-introduction</code>; shared lines use <code>SH</code>, phonemes <code>PH</code>, words <code>WD</code> and chunks <code>CH</code>. Language: English (UK), assumed from the site's en-GB setting. No audio has been generated. Number words, effects and Game 1's word lists reuse what already exists (noted per game). The same list is saved as a CSV file in the project.</p>
+<input class="search" id="voq" type="search" placeholder="Search lines, IDs or games" aria-label="Search voiceover lines">
+<div id="vol">${groups.map(([k, t]) => { const rs = ROWS.filter(r => r.group === k); const g = GAMES.find(x => "G" + pad(x.n) === k); const extra = g && (g.existingScript || g.numbersNote || g.sfx) ? `<p style="padding:8px 14px;color:var(--soft)">${esc([g.existingScript, g.numbersNote, g.sfx].filter(Boolean).join(" "))}</p>` : ""; return `<details data-g="${k}"><summary>${esc(t)} · ${rs.length}</summary>${extra}${voTable(rs)}</details>`; }).join("")}</div>`;
+document.getElementById("voq").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll("#vol details").forEach(d => {
+    let any = false;
+    d.querySelectorAll("tbody tr").forEach(tr => { const m = !q || tr.textContent.toLowerCase().includes(q) || d.querySelector("summary").textContent.toLowerCase().includes(q); tr.hidden = !m; any = any || m; });
+    d.hidden = !any; if (q) d.open = any;
+  });
+});
+
+/* ---------- research map ---------- */
+document.getElementById("v-research").innerHTML = `<h2>Research-to-design map</h2>
+<p class="notice"><b>The source has no research references.</b> I read the whole production tracker and the project files and found no studies, citations or findings for any game. Following your rule, I haven't added citations from memory. Each card below separates the source's skill targets from my design rationale, which is reasoning, not evidence. These games give practice; none of them is claimed to produce measurable improvement.</p>
+<div class="rm" style="margin-top:14px">${GAMES.map(g => `<article><h4>${pad(g.n)} · ${esc(g.name)}</h4><dl><dt>From the source</dt><dd>${esc(g.skill)}; ${esc(g.cog)}; ${esc(g.age)}</dd><dt>Research in the source</dt><dd>None</dd><dt>Design rationale (not evidence)</dt><dd>${esc(g.rationale)}</dd><dt>Evidence to add</dt><dd>Studies on ${esc(g.supporting[0].toLowerCase())} for ${esc(g.age.replace(/^.*\(/, "ages ").replace(")", ""))}</dd></dl></article>`).join("")}</div>`;
+
+/* ---------- issues ---------- */
+document.getElementById("v-issues").innerHTML = `<h2>Things only you can decide</h2><ol class="issues">
+<li><b>The 28 are not all Literacy.</b> Your tracker's set is Literacy 1–12, Main curriculum 13–27 and a proposed Game 28. I kept every game under its original name and number. If you meant a separate list of 28 Literacy games, it isn't in the project files; send it and I'll redo the batch against it.</li>
+<li><b>No research references in the source</b>, so the research map holds design rationale only. Say if you want the evidence sourced next.</li>
+<li><b>Game 1 (Echo Cave)</b> was already approved and built per the tracker, but its code isn't in the repository. Its design is shown unchanged.</li>
+<li><b>Firefly Jars (24)</b>: the built game in the repo practises numeral recognition, while the tracker says counting and 'how many'. This design follows the tracker.</li>
+<li><b>Flash Jar (25)</b> overlaps the built Quick Peek (subitising).</li>
+<li><b>Story Lanterns (23) and Story Map Explorer (10)</b>: the tracker suggests merging; not merged. Story Lanterns was designed around listening and feelings to keep them apart.</li>
+<li><b>Night Story (20)</b> uses the suggested everyday-routines version, pending your decision.</li>
+<li><b>Split the Jar (28)</b> is still proposed; designed so you can decide with a picture.</li>
+<li><b>Level names differ</b>: the tracker uses Spark, Glow, Flame, Beacon, Lighthouse; the built maths games use Little Sparks, Glow, Shine, Bright. These designs use the tracker's names.</li>
+<li><b>Guide characters</b> are new proposals except Pip, Sunny and Hazel. Penny the pigeon appears in Games 3 and 12, and Flick the firefly in 15, 24, 25 and 28, to link related games.</li>
+<li><b>Accent</b>: English (UK) assumed for all recordings.</li></ol>`;
+
+/* ---------- tabs ---------- */
+const views = ["gallery", "tracker", "voiceovers", "research", "issues"];
+function show(v, open) {
+  views.forEach(x => { document.getElementById("v-" + x).hidden = x !== v; document.querySelector(`.tabs [data-v="${x}"]`).setAttribute("aria-selected", x === v); });
+  if (open) { const d = document.querySelector(`#vol details[data-g="${open}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); return; } }
+  window.scrollTo({ top: 0 });
+}
+document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(b.dataset.v); });
+document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (a) { e.preventDefault(); show(a.dataset.go, a.dataset.open); } });
+const h = location.hash.slice(1);
+if (views.includes(h)) show(h); else if (/^g\d\d$/.test(h)) { const el = document.getElementById(h); el && el.scrollIntoView(); }
+</script>
