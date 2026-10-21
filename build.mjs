@@ -112,11 +112,12 @@ async function build() {
   await writeFile(join(out, 'assets/js/search-index.js'), `window.LL_SEARCH = ${JSON.stringify(searchIndex())};\n`);
   await writeFile(join(out, 'assets/js/catalog.js'), `window.LL_CATALOG = ${JSON.stringify(catalog())};\n`);
 
-  // Games keep their own files and routes, copied as-is.
+  // Games keep their own files and routes, copied as-is. Snail Trails stays in the repo but off the
+  // site: tracing didn't work well enough on phones, so number tracing is offered as printables instead.
   const gamesDir = join(here, 'games');
   if (existsSync(gamesDir)) {
     const entries = (await readdir(gamesDir)).filter((f) => f !== 'README.md');
-    if (entries.length) await cp(gamesDir, join(out, 'games'), { recursive: true, filter: (src) => !src.endsWith('games/README.md') });
+    if (entries.length) await cp(gamesDir, join(out, 'games'), { recursive: true, filter: (src) => !src.endsWith('games/README.md') && !/games[\\/]snail-trails/.test(src) });
   }
 
   // The literacy and thinking-skills games share an engine and audio in

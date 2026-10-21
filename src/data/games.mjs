@@ -79,15 +79,6 @@ export const games = [
     curriculumLevels: [3, 4],
   },
   {
-    slug: 'snail-trails',
-    title: 'Snail Trails',
-    description: 'Follow Sunny the snail’s shiny trail to trace numbers, copy them, and then write them all by yourself.',
-    practises: ['Writing numerals 0 to 20', 'Spotting backwards numbers'],
-    ages: '4–6',
-    level: 'Levels 3–4 · Shine to Bright',
-    curriculumLevels: [3, 4],
-  },
-  {
     slug: 'maples-cookies',
     title: 'Maple’s Cookies',
     description: 'Share cookies with Maple the mouse, counting all the way down to an empty plate. That’s zero!',
@@ -201,6 +192,7 @@ games.push(...playable);
 // recordings). They show on their studio page with a "Coming soon" sign and
 // no play button. Move a game up into `playable` once it is built and tested.
 export const comingSoon = [
+  { slug: 'number-tracing-printables', studio: 'number-nook', title: 'Number Tracing Printables', ages: '3–6', description: 'Print-and-trace sheets for writing numbers 0 to 20, with Sunny the snail’s shiny trail to follow.', practises: ['Writing numerals 0 to 20'] },
   { slug: 'letter-post-office', studio: 'word-garden', title: 'Letter Post Office', ages: '3–5', description: 'Post each letter into the box that makes its sound, with Penny the pigeon.', practises: ['Letters and their sounds'] },
   { slug: 'robot-talk', studio: 'word-garden', title: 'Robot Talk', ages: '4–6', description: 'Bolt the robot talks in sounds: c… a… t. Blend them together to work out the word.', practises: ['Blending sounds'] },
   { slug: 'potion-spells', studio: 'word-garden', title: 'Potion Spells', ages: '4–6', description: 'Split a word into its sounds and spell it, one sound in each bubble, with Fenn the fox.', practises: ['Splitting words into sounds', 'Spelling'] },
