@@ -79,7 +79,7 @@ export function toyCard(t, h) {
 
 export function printableCard(p, h) {
   const studio = studioById(p.studio);
-  const meta = [p.ages && `Ages ${esc(p.ages)}`, p.pages && `${p.pages} pages`].filter(Boolean);
+  const meta = [p.ages && `Ages ${esc(p.ages)}`, p.pages && `${p.pages} page${p.pages === 1 ? '' : 's'}`].filter(Boolean);
   return `
   <article class="paper-card">
     <div class="paper-card-sheet">${p.preview ? `<img src="${h(p.preview)}" alt="Preview of ${esc(p.title)}" loading="lazy">` : ''}</div>

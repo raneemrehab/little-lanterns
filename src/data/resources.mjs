@@ -14,7 +14,18 @@
 //     price: 'free',    // 'free' or a display price, only once selling is set up
 //   }
 
-export const printables = [];
+export const printables = [
+  {
+    title: 'Playdough Mat: Number 1',
+    studio: 'number-nook',
+    description: 'Roll a playdough snake to make a 1, give the ladybug 1 spot, put 1 ball in the ten frame and trace the word one.',
+    file: 'assets/printables/number-1-playdough-mat.pdf',
+    preview: 'assets/printables/number-1-playdough-mat.png',
+    ages: '3–5',
+    pages: 1,
+    price: 'free',
+  },
+];
 
 // TOYS: these are early ideas the brand is exploring, as described in the
 // brief. They are concepts only: no specifications, prices or dates.
