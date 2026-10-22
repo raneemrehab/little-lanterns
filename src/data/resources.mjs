@@ -25,6 +25,16 @@ export const printables = [
     pages: 1,
     price: 'free',
   },
+  {
+    title: 'Feed the Hungry Caterpillar',
+    studio: 'number-nook',
+    description: 'Trace the numbers 1 to 7 on the caterpillar, colour each day\'s food and say the days of the week. Made to use with our caterpillar video.',
+    file: 'assets/printables/hungry-caterpillar-feeding-sheet.pdf',
+    preview: 'assets/printables/hungry-caterpillar-feeding-sheet.png',
+    ages: '3–5',
+    pages: 1,
+    price: 'free',
+  },
 ];
 
 // TOYS: these are early ideas the brand is exploring, as described in the
